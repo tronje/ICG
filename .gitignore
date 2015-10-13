@@ -1,0 +1,8 @@
+# tex related files
+*.pdf
+*.aux
+*.log
+
+# compiled files
+*.o
+*.x
