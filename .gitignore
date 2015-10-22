@@ -6,3 +6,6 @@
 # compiled files
 *.o
 *.x
+
+# zipped files
+*.zip
