@@ -10,15 +10,17 @@ window.onload = function init()
 
     // Specify position and color of the vertices
     
-    var vertices = new Float32Array([   -0.5, -0.5, 
-                                        0, 0.5]);
-    var colors = new Float32Array([ 1, 0, 0, 1, 
-                                    0, 0, 1, 1]);
+    var vertices = new Float32Array([
+                                    0.0, 0.5, // x0, y0
+                                       0.04,  0.5  // x1, y1
+                                    ]);
+    var colors = new Float32Array([ 1, 1, 1, 1, 
+                                    1, 1, 1, 1]);
     
     // Configure viewport
 
     gl.viewport(0,0,canvas.width,canvas.height);
-    gl.clearColor(1.0,1.0,1.0,1.0);
+    gl.clearColor(0,0,0,1.0);
 
     // Init shader program and bind it
 
