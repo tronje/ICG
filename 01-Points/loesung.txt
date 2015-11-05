@@ -1,0 +1,3 @@
+unsere Lösung ist folgende: der durchschnittliche Abstand aller Gruppenmitglieder, aus denen sie die Lücke sehen konnten,
+ist 3,747m.
+Daraus ergibt sich ein Winkel von 0,06116 Grad.
