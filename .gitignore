@@ -1,5 +1,5 @@
 # tex related files
-*.pdf
+#*.pdf
 *.aux
 *.log
 
