@@ -56,3 +56,10 @@ function render()
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.POINTS, 0, 2);
 }
+
+// normValue(256, 0, 512, -1, 1) -> 0
+function normValue(value, valueMin, valueMax, resultMin, resultMax)
+{
+    temp = (value - valueMin) / (valueMax - valueMin);
+    return temp * (resultMax - resultMin) + resultMin;
+}
