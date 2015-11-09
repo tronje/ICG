@@ -1,37 +1,58 @@
+/**
+ * Please note:
+ * TODO
+ */
 var gl;
+var program;
 
 // points registered
 var reg_points = [0, 0,
                   0, 0];
 
+// array to be drawn
+var draw_points = [];
+
+// number of squares to be drawn
+var num_squares = 0;
+
 // our canvas
 var canvas;
 
+// our color display
+var color_display;
+
+// our clear-button
+var clearer;
+
 // vertices
-var vertices = new Float32Array(reg_points);
+var vertices;
+var temp_vertices;
 
 // colors
 // we seperate color and vertex vectors because it'll be simpler to modify
 // them on the fly (hopefully)
-var colors = new Float32Array([1, 0, 0, 1,
-                               1, 0, 0, 1,
-                               1, 0, 0, 1,
-                               1, 0, 0, 1 ]);
+var _colors = [1, 0, 0, 1,
+               1, 0, 0, 1,
+               1, 0, 0, 1,
+               1, 0, 0, 1 ];
 
-var _red = new Float32Array([1, 0, 0, 1,
-                             1, 0, 0, 1,
-                             1, 0, 0, 1,
-                             1, 0, 0, 1 ]);
+var colors = [];
+var draw_colors;
 
-var _green = new Float32Array([0, 1, 0, 1,
-                               0, 1, 0, 1,
-                               0, 1, 0, 1,
-                               0, 1, 0, 1 ]);
+var _red = [1, 0, 0, 1,
+            1, 0, 0, 1,
+            1, 0, 0, 1,
+            1, 0, 0, 1 ];
 
-var _blue = new Float32Array([0, 0, 1, 1,
-                              0, 0, 1, 1,
-                              0, 0, 1, 1,
-                              0, 0, 1, 1 ]);
+var _green = [0, 1, 0, 1,
+              0, 1, 0, 1,
+              0, 1, 0, 1,
+              0, 1, 0, 1 ];
+
+var _blue = [0, 0, 1, 1,
+             0, 0, 1, 1,
+             0, 0, 1, 1,
+             0, 0, 1, 1 ];
 
 // fetch the keycodes we'll need to change color
 // we do this now so we don't have to do it every
@@ -40,74 +61,140 @@ var r_code = "r".charCodeAt(0);
 var g_code = "g".charCodeAt(0);
 var b_code = "b".charCodeAt(0);
 
+// keep track of wether the mouse is clicked or not
+var clicked = false;
+
 window.onload = function init()
 {
-    // loop our render function
-    // get canvas and set up webGL
+    // get our canvas
     canvas = document.getElementById("gl-canvas");
+
+    // get our color-display div and modify it a little
+    color_display = document.getElementById("color-display");
+    color_display.style.maxWidth = '100px';
+    color_display.style.color = 'white';
+    color_display.style.backgroundColor = 'red';
+
+    // set up webgl
     gl = WebGLUtils.setupWebGL(canvas);
     if (!gl) { alert("WebGL isn't available!"); }
+
+    // get our clear button
+    clearer = document.getElementById("clearer");
+
+    // add functionality to it
+    clearer.addEventListener("click", function() {
+        // clear the canvas
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        // re-initialize (almost) everything
+        num_squares = 0;
+        draw_points = [];
+        reg_points = [0, 0, 0, 0];
+        colors = [];
+    });
 
     // the canvas can't be focused; thus we need to add a key listener
     // to the window instead
     window.addEventListener("keypress", function(event) {
         switch(event.charCode) {
             case r_code:
-                colors = _red;
+                _colors = _red;
+                color_display.style.backgroundColor = 'red';
                 break;
             case g_code:
-                colors = _green;
+                _colors = _green;
+                color_display.style.backgroundColor = 'green';
                 break;
             case b_code:
-                colors = _blue;
+                _colors = _blue;
+                color_display.style.backgroundColor = 'blue';
                 break;
         }
-
-        // Load colors into the GPU and associate shader variables
-        var cBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, colors, gl.DYNAMIC_DRAW);
-        
-        var vColor = gl.getAttribLocation(program, "vColor");
-        gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(vColor);
     });
 
     // add event listeners to canvas
+
+    // register mouse click and position on mousedown
     canvas.addEventListener("mousedown", function(event) {
-        //reg_points[0] = event.clientX;
-        //reg_points[1] = event.clientY;
+        clicked = true;
         reg_points[0] = normValue(event.clientX, 0, canvas.width, -1, 1);
         reg_points[1] = normValue(event.clientY, 0, canvas.height, -1, 1);
     });
 
+    // register mouse un-click and position on mouseup
+    // also update vertices and colors and draw everything
     canvas.addEventListener("mouseup", function(event) {
-        //reg_points[2] = event.clientX;
-        //reg_points[3] = event.clientY;
+        clicked = false;
+
         reg_points[2] = normValue(event.clientX, 0, canvas.width, -1, 1);
         reg_points[3] = normValue(event.clientY, 0, canvas.height, -1, 1);
 
-        vertices = new Float32Array(makeSquare(reg_points));
+        // concatenate registered points to the points to be drawn
+        draw_points = draw_points.concat(makeSquare(reg_points));
 
+        // update the number of squares to be drawn
+        num_squares += 1;
+
+        //vertices = new Float32Array(makeSquare(reg_points));
+        vertices = new Float32Array(draw_points);
+        colors = colors.concat(_colors);
+        draw_colors = new Float32Array(colors);
+
+        // Load colors into the GPU and associate shader variables
+        var cBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, draw_colors, gl.DYNAMIC_DRAW);
+        
+        var vColor = gl.getAttribLocation(program, "vColor");
+        gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(vColor);
 
         // Load positions into the GPU and associate shader variables
         var bufferId = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
-        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.DYNAMIC_DRAW);
 
         var vPosition = gl.getAttribLocation(program, "vPosition");
         gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(vPosition);
 
         // clear canvas
-        gl.clear(gl.COLOR_BUFFER_BIT);
+        //gl.clear(gl.COLOR_BUFFER_BIT);
         
         // re-register vertices in buffer
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-        // draw our square
-        //gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
-        gl.drawArrays(gl.LINE_LOOP, 0, 4);
+        // draw our squares
+        for (i = 0; i < num_squares; ++i)
+        {
+            gl.drawArrays(gl.TRIANGLE_FAN, i * 4, 4);
+        }
+    });
+
+    canvas.addEventListener("mousemove", function(event) {
+        if (clicked)
+        {
+            reg_points[2] = normValue(event.clientX, 0, canvas.width, -1, 1);
+            reg_points[3] = normValue(event.clientY, 0, canvas.height, -1, 1);
+
+            vertices = new Float32Array(makeSquare(reg_points));
+
+            // Load positions into the GPU and associate shader variables
+            var bufferId = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
+            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+            var vPosition = gl.getAttribLocation(program, "vPosition");
+            gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(vPosition);
+
+            // re-register vertices in buffer
+            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+            // draw our square
+            gl.drawArrays(gl.LINE_LOOP, 0, 4);
+        }
     });
 
     // configure viewport
@@ -115,19 +202,9 @@ window.onload = function init()
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
 
     // init shader program and bind it
-    var program = initShaders(gl, "vertex-shader", "fragment-shader");
+    program = initShaders(gl, "vertex-shader", "fragment-shader");
 
     gl.useProgram(program);
-    // Load colors into the GPU and associate shader variables
-    var cBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.DYNAMIC_DRAW);
-    
-    var vColor = gl.getAttribLocation(program, "vColor");
-    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(vColor);
-    
-    vertices = new Float32Array(makeSquare(reg_points));
 };
 
 function normValue(value, valueMin, valueMax, resultMin, resultMax)
