@@ -5,6 +5,8 @@
         <meta name="viewport" content="width=device-width">
         <title>ICG Blatt 02</title>
 
+        <link rel="stylesheet" type="text/css" href="main.css">
+
         <script id="vertex-shader" type="x-shader/x-vertex">
             attribute vec4 vPosition;
             attribute vec4 vColor;
@@ -31,10 +33,18 @@
         <script type="text/javascript" src="main.js"></script>
     </head>
     <body>
-        <canvas id="gl-canvas" width="1280" height="720">
-            If you see this, your browser sucks.
-        </canvas>
-        <div id="color-display">&nbsp;current color</div>
-        <button id="clearer">CLEAR</button>
+        <div class="wrapper">
+            <div class="canvas-container">
+                <canvas id="gl-canvas" width="1280" height="720">
+                    If you see this, your browser sucks.
+                </canvas>
+            </div>
+            <div class="options">
+                <br />
+                <div class="color-display" id="color-display">&nbsp;current color</div>
+                <br />
+                <button id="clearer">CLEAR</button>
+            </div>
+        </div>
     </body>
 </html>

@@ -70,7 +70,7 @@ window.onload = function init()
     color_display = document.getElementById("color-display");
     color_display.style.maxWidth = '100px';
     color_display.style.color = 'white';
-    color_display.style.backgroundColor = 'red';
+    color_display.style.backgroundColor = '#ff0000';
 
     // set up webgl
     gl = WebGLUtils.setupWebGL(canvas);
@@ -97,15 +97,15 @@ window.onload = function init()
         switch(event.charCode) {
             case r_code:
                 _colors = _red;
-                color_display.style.backgroundColor = 'red';
+                color_display.style.backgroundColor = '#ff0000';
                 break;
             case g_code:
                 _colors = _green;
-                color_display.style.backgroundColor = 'green';
+                color_display.style.backgroundColor = '#00ff00';
                 break;
             case b_code:
                 _colors = _blue;
-                color_display.style.backgroundColor = 'blue';
+                color_display.style.backgroundColor = '#0000ff';
                 break;
         }
     });
@@ -192,7 +192,7 @@ window.onload = function init()
     gl.useProgram(program);
 
     // Load positions into the GPU and associate shader variables
-    loadPos(vertices);
+    //loadPos(vertices);
 };
 
 /*
