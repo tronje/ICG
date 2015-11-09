@@ -1,7 +1,3 @@
-/**
- * Please note:
- * TODO
- */
 var gl;
 var program;
 
@@ -127,14 +123,14 @@ window.onload = function init()
     canvas.addEventListener("mouseup", function(event) {
         clicked = false;
 
+        // update the number of squares to be drawn
+        num_squares += 1;
+
         reg_points[2] = normValue(event.clientX, 0, canvas.width, -1, 1);
         reg_points[3] = normValue(event.clientY, 0, canvas.height, -1, 1);
 
         // concatenate registered points to the points to be drawn
         draw_points = draw_points.concat(makeSquare(reg_points));
-
-        // update the number of squares to be drawn
-        num_squares += 1;
 
         //vertices = new Float32Array(makeSquare(reg_points));
         vertices = new Float32Array(draw_points);
@@ -172,13 +168,30 @@ window.onload = function init()
         }
     });
 
+    // draw our preview squares
     canvas.addEventListener("mousemove", function(event) {
         if (clicked)
         {
+
+            // fetch corner point
             reg_points[2] = normValue(event.clientX, 0, canvas.width, -1, 1);
             reg_points[3] = normValue(event.clientY, 0, canvas.height, -1, 1);
 
-            vertices = new Float32Array(makeSquare(reg_points));
+            // create new vertex array
+            vertices = draw_points.concat(makeSquare(reg_points));
+            console.log(vertices.length)
+            vertices = new Float32Array(vertices);
+
+            draw_colors = new Float32Array(colors.concat(_colors));
+
+            // Load colors into the GPU and associate shader variables
+            var cBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, draw_colors, gl.DYNAMIC_DRAW);
+            
+            var vColor = gl.getAttribLocation(program, "vColor");
+            gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(vColor);
 
             // Load positions into the GPU and associate shader variables
             var bufferId = gl.createBuffer();
@@ -192,8 +205,13 @@ window.onload = function init()
             // re-register vertices in buffer
             gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-            // draw our square
-            gl.drawArrays(gl.LINE_LOOP, 0, 4);
+            // draw all squares...
+            for (i = 0; i < num_squares; ++i)
+            {
+                gl.drawArrays(gl.TRIANGLE_FAN, i * 4, 4);
+            }
+            // ... as well as our preview square!
+            gl.drawArrays(gl.LINE_LOOP, num_squares * 4, 4);
         }
     });
 
