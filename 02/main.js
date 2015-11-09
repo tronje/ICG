@@ -57,9 +57,10 @@ var r_code = "r".charCodeAt(0);
 var g_code = "g".charCodeAt(0);
 var b_code = "b".charCodeAt(0);
 
-// keep track of wether the mouse is clicked or not
+// variable to keep track of wether the mouse is clicked or not
 var clicked = false;
 
+// init function
 window.onload = function init()
 {
     // get our canvas
@@ -138,28 +139,7 @@ window.onload = function init()
         draw_colors = new Float32Array(colors);
 
         // Load colors into the GPU and associate shader variables
-        var cBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, draw_colors, gl.DYNAMIC_DRAW);
-        
-        var vColor = gl.getAttribLocation(program, "vColor");
-        gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(vColor);
-
-        // Load positions into the GPU and associate shader variables
-        var bufferId = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
-        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.DYNAMIC_DRAW);
-
-        var vPosition = gl.getAttribLocation(program, "vPosition");
-        gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(vPosition);
-
-        // clear canvas
-        //gl.clear(gl.COLOR_BUFFER_BIT);
-        
-        // re-register vertices in buffer
-        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+        loadColors(draw_colors);
 
         // draw our squares
         for (i = 0; i < num_squares; ++i)
@@ -185,25 +165,10 @@ window.onload = function init()
             draw_colors = new Float32Array(colors.concat(_colors));
 
             // Load colors into the GPU and associate shader variables
-            var cBuffer = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, draw_colors, gl.DYNAMIC_DRAW);
-            
-            var vColor = gl.getAttribLocation(program, "vColor");
-            gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
-            gl.enableVertexAttribArray(vColor);
+            loadColors(draw_colors);
 
             // Load positions into the GPU and associate shader variables
-            var bufferId = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
-            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-
-            var vPosition = gl.getAttribLocation(program, "vPosition");
-            gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
-            gl.enableVertexAttribArray(vPosition);
-
-            // re-register vertices in buffer
-            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+            loadPos(vertices);
 
             // draw all squares...
             for (i = 0; i < num_squares; ++i)
@@ -217,20 +182,66 @@ window.onload = function init()
 
     // configure viewport
     gl.viewport(0, 0, canvas.width, canvas.height);
+
+    // set background/default color
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
 
     // init shader program and bind it
     program = initShaders(gl, "vertex-shader", "fragment-shader");
 
     gl.useProgram(program);
+
+    // Load positions into the GPU and associate shader variables
+    loadPos(vertices);
 };
 
+/*
+ * Load positions into the GPU and associate shader variables
+ */
+function loadPos(vertices)
+{
+    var bufferId = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.DYNAMIC_DRAW);
+
+    var vPosition = gl.getAttribLocation(program, "vPosition");
+    gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vPosition);
+    
+    // register vertices in buffer
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+}
+
+/*
+ * Load colors into the GPU and associate shader variables
+ */
+function loadColors(colors)
+{
+    var cBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.DYNAMIC_DRAW);
+
+    var vColor = gl.getAttribLocation(program, "vColor");
+    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vColor);
+}
+
+/*
+ * map a given value that occours in the range valueMin to valueMax,
+ * to its corresponding value within the range resultMin to resultMax.
+ */
 function normValue(value, valueMin, valueMax, resultMin, resultMax)
 {
     temp = (value - valueMin) / (valueMax - valueMin);
     return temp * (resultMax - resultMin) + resultMin;
 }
 
+/* 
+ * return an array of 8 values, corresponding to the
+ * coordinates of 4 points (which make a square),
+ * calculated from two corner points (passed in the form of
+ * a 4-element array)
+ */
 function makeSquare(arr)
 {
     // assuming the first point's x and y are both lower than
