@@ -1,0 +1,79 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <title>Blatt 03</title>
+        
+        <script id="vertex-shader" type="x-shader/x-vertex">
+            attribute vec4 vPosition;
+            attribute vec4 vColor;
+
+            varying vec4 fColor;
+            void main()
+            {
+                fColor = vColor;
+                gl_Position = vPosition;
+            }
+        </script>
+        <script id="fragment-shader" type="x-shader/x-fragment">
+            precision mediump float;
+
+            varying vec4 fColor;
+
+            // specify our origin (e.g. center)
+            const vec2 origin = vec2(256, 256);
+
+            // handy function to calculate wether a point
+            // is located between two circles, which share a common origin
+            bool inCircle(vec2 origin, float radius_a, float radius_b)
+            {
+                // calculate the distance between the point and the origin
+                float dist = sqrt(
+                    pow(origin.x - gl_FragCoord.x, 2.0)
+                    + pow(origin.y - gl_FragCoord.y, 2.0)
+                );
+
+                // check if the point is between the circles...
+                if (dist < radius_a && dist > radius_b)
+                {
+                    // ... andreturn true if it is ...
+                    return true;
+                }
+                // ... or false if it's not.
+                return false;
+            }
+
+            // main function
+            void main()
+            {
+                // set the color for the fragment
+                gl_FragColor = fColor;
+
+                // update the color if the fragment is within the circles
+                if (inCircle(origin, 180.0, 130.0))
+                {
+                    // why can't we just do this?
+                    //gl_FragColor.a = 0.7;
+
+                    for (int i = 0; i < 3; ++i)
+                    {
+                        gl_FragColor[i] *= 1.5;
+                    }
+                }
+            }
+        </script>
+
+        <script type="text/javascript" src="../Common/webgl-utils.js">
+        </script>
+        <script type="text/javascript" src="../Common/initShaders.js">
+        </script>
+        <script type="text/javascript" src="main.js">
+        </script>
+    </head>
+    <body>
+        <canvas id="gl-canvas" width="512" height="512">
+            If you see this, your browser doesn't support WebGL.
+        </canvas>
+        
+    </body>
+</html>
