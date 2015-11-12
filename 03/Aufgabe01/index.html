@@ -20,6 +20,15 @@
 
             varying vec4 fColor;
 
+            // our circle's radius
+            uniform float radius;
+
+            // our circle's thickness
+            uniform float thickness;
+
+            // our brightness
+            uniform float brightness;
+
             // specify our origin (e.g. center)
             const vec2 origin = vec2(256, 256);
 
@@ -50,14 +59,14 @@
                 gl_FragColor = fColor;
 
                 // update the color if the fragment is within the circles
-                if (inCircle(origin, 180.0, 130.0))
+                if (inCircle(origin, radius, radius - thickness))
                 {
                     // why can't we just do this?
                     //gl_FragColor.a = 0.7;
 
                     for (int i = 0; i < 3; ++i)
                     {
-                        gl_FragColor[i] *= 1.5;
+                        gl_FragColor[i] *= brightness;
                     }
                 }
             }
