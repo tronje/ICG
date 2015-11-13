@@ -32,6 +32,7 @@
             // specify our origin (e.g. center)
             const vec2 origin = vec2(256, 256);
 
+            // calculates the distance to the origin
             float dist(vec2 origin)
             {
                 return sqrt(
@@ -45,10 +46,10 @@
             bool inCircle(vec2 origin, float radius_a, float radius_b)
             {
                 // calculate the distance between the point and the origin
-                float dist = dist(origin);
+                float d = dist(origin);
 
                 // check if the point is between the circles...
-                if (dist < radius_a && dist > radius_b)
+                if (d < radius_a && d > radius_b)
                 {
                     // ... and return true if it is ...
                     return true;
