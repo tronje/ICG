@@ -1,13 +1,30 @@
 // our webgl context
 var gl;
 
+// our program
+var program;
+
 // our canvas
 var canvas;
 
+// our vertices
+var vertices;
+
 // our circle's attributes
-var thickness = 20;
-var radius = 200;
+var thickness = 30.0;
+var radius = 200.0;
 var brightness = 1.5;
+
+// radius min/max
+// empirically determined
+// (magic numbers woohoo!)
+var radius_max = 260.0;
+var radius_min = 30.0;
+
+// brightness min/max
+// a brightness lower than 1.0 would mean a gray circle
+var brightness_max = 5.0;
+var brightness_min = 1.0;
 
 // the corresponding locations
 var radius_loc;
@@ -29,7 +46,7 @@ window.onload = function init()
     if (!gl) { alert("WebGL isn't available"); }
 
     // Specify position and color of the vertices
-    var vertices = new Float32Array([// vertices
+    vertices = new Float32Array([// vertices
                                      -1, -1, 
                                      -1,  1, 
                                       1,  1,
@@ -47,7 +64,7 @@ window.onload = function init()
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
 
     // Init shader program and bind it
-    var program = initShaders(gl, "vertex-shader", "fragment-shader");
+    program = initShaders(gl, "vertex-shader", "fragment-shader");
     /// get variable locations from shader
     radius_loc = gl.getUniformLocation(program, "radius");
     thickness_loc = gl.getUniformLocation(program, "thickness");
@@ -55,23 +72,32 @@ window.onload = function init()
     gl.useProgram(program);
 
     // initially set our variables in the fragment shader
-    gl.uniform1f(radius_loc, 200.0);
-    gl.uniform1f(thickness_loc, 20.0);
-    gl.uniform1f(brightness_loc, 1.5);
+    gl.uniform1f(radius_loc, radius);
+    gl.uniform1f(thickness_loc, thickness);
+    gl.uniform1f(brightness_loc, brightness);
     
-    // Load colors into the GPU and associate shader variables
-    // Load positions into the GPU and associate shader variables
-    var bufferId = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
-    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+    loadStuff();
 
-    var vColor = gl.getAttribLocation(program, "vColor");
-    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 32);
-    gl.enableVertexAttribArray(vColor);
-
-    var vPosition = gl.getAttribLocation(program, "vPosition");
-    gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(vPosition);
+    // add an event listener to listen for keypresses
+    // we add it to the window because the canvas can't handle keypresses/
+    // keydowns, as it can't be focused.
+    window.addEventListener("keydown", function(event) {
+        switch(event.keyCode)
+        {
+            case left:
+                decreaseRadius(5.0);
+                break;
+            case right:
+                increaseRadius(5.0);
+                break;
+            case up:
+                increaseBrightness(0.05);
+                break;
+            case down:
+                decreaseBrightness(0.05);
+                break;
+        }
+    });
     render();
 };
 
@@ -92,32 +118,80 @@ function normValue(value, valueMin, valueMax, resultMin, resultMax)
 }
 
 /*
- * Load positions into the GPU and associate shader variables
+ * Load colors into the GPU and associate shader variables.
+ * Load positions into the GPU and associate shader variables.
  */
-function loadPos(vertices)
+function loadStuff()
 {
     var bufferId = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
-    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.DYNAMIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+    var vColor = gl.getAttribLocation(program, "vColor");
+    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 32);
+    gl.enableVertexAttribArray(vColor);
 
     var vPosition = gl.getAttribLocation(program, "vPosition");
     gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vPosition);
-    
-    // register vertices in buffer
-    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 }
 
 /*
- * Load colors into the GPU and associate shader variables
+ * Increase radius by val up until a certain limit
  */
-function loadColors(colors)
+function increaseRadius(val)
 {
-    var cBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.DYNAMIC_DRAW);
+    radius += val;
+    if (radius > radius_max)
+    {
+        radius = radius_max;
+    }
+    gl.uniform1f(radius_loc, radius);
+    loadStuff();
+    render();
+}
 
-    var vColor = gl.getAttribLocation(program, "vColor");
-    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(vColor);
+/*
+ * Decrease radius by val up until a certain limit
+ */
+function decreaseRadius(val)
+{
+    radius -= val;
+    if (radius < radius_min)
+    {
+        radius = radius_min;
+    }
+    gl.uniform1f(radius_loc, radius);
+    loadStuff();
+    render();
+}
+
+/*
+ * Increase brightness by val up until a certain limit
+ */
+function increaseBrightness(val)
+{
+    brightness += val;
+    if (brightness > brightness_max)
+    {
+        brightness = brightness_max;
+    }
+    gl.uniform1f(brightness_loc, brightness);
+    loadStuff();
+    render();
+}
+
+/*
+ * Decrease brightness by val up until a certain limit
+ */
+function decreaseBrightness(val)
+{
+    brightness -= val;
+    if (brightness < brightness_min)
+    {
+        brightness = brightness_min;
+    }
+    gl.uniform1f(brightness_loc, brightness);
+    loadStuff();
+    render();
 }
