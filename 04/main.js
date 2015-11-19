@@ -10,26 +10,8 @@ var canvas;
 // our vertices
 var vertices;
 
-// our circle's attributes
-var thickness = 30.0;
-var radius = 200.0;
-var brightness = 1.5;
-
-// radius min/max
-// empirically determined
-// (magic numbers woohoo!)
-var radius_max = 260.0;
-var radius_min = 30.0;
-
-// brightness min/max
-// a brightness lower than 1.0 would mean a gray circle
-var brightness_max = 5.0;
-var brightness_min = 1.0;
-
-// the corresponding locations
-var radius_loc;
-var thickness_loc;
-var brightness_loc;
+// our matrix's location
+var matrixLoc;
 
 // define keycodes for arrow keys
 var left = 37;
@@ -47,16 +29,14 @@ window.onload = function init()
 
     // Specify position and color of the vertices
     vertices = new Float32Array([// vertices
-                                     -1, -1, 
-                                     -1,  1, 
-                                      1,  1,
-                                      1, -1,
+                                     -0.1, -0.1, 
+                                      0.0,  0.1, 
+                                      0.1, -0.1,
 
                                      // colors
                                       0, 1, 1, 1,
                                       0, 0, 1, 1,
                                       1, 0, 1, 1,
-                                      1, 1, 0, 1,
                                       ]);
 
     // Configure viewport
@@ -71,40 +51,49 @@ window.onload = function init()
     brightness_loc = gl.getUniformLocation(program, "brightness");
     gl.useProgram(program);
 
-    // initially set our variables in the fragment shader
-    gl.uniform1f(radius_loc, radius);
-    gl.uniform1f(thickness_loc, thickness);
-    gl.uniform1f(brightness_loc, brightness);
-    
+	matrixLoc = gl.getUniformLocation(program, "rotationMatrix");
     loadStuff();
 
+	var alpha = 0.2;
+	var rotmat = new Float32Array([
+		Math.cos(alpha), Math.sin(alpha), 0, 0,
+		-Math.sin(alpha), Math.cos(alpha), 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 1
+	]);
+
+	gl.uniformMatrix4fv(
+		matrixLoc,
+		false,
+		rotmat
+	);
     // add an event listener to listen for keypresses
     // we add it to the window because the canvas can't handle keypresses/
     // keydowns, as it can't be focused.
-    window.addEventListener("keydown", function(event) {
-        switch(event.keyCode)
-        {
-            case left:
-                decreaseRadius(5.0);
-                break;
-            case right:
-                increaseRadius(5.0);
-                break;
-            case up:
-                increaseBrightness(0.05);
-                break;
-            case down:
-                decreaseBrightness(0.05);
-                break;
-        }
-    });
+//    window.addEventListener("keydown", function(event) {
+//        switch(event.keyCode)
+//        {
+//            case left:
+//                decreaseRadius(5.0);
+//                break;
+//            case right:
+//                increaseRadius(5.0);
+//                break;
+//            case up:
+//                increaseBrightness(0.05);
+//                break;
+//            case down:
+//                decreaseBrightness(0.05);
+//                break;
+//        }
+//    });
     render();
 };
 
 function render()
 {
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, 3);
 }
 
 /*
@@ -128,7 +117,7 @@ function loadStuff()
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
     var vColor = gl.getAttribLocation(program, "vColor");
-    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 32);
+    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 24);
     gl.enableVertexAttribArray(vColor);
 
     var vPosition = gl.getAttribLocation(program, "vPosition");

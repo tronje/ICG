@@ -8,11 +8,14 @@
             attribute vec4 vPosition;
             attribute vec4 vColor;
 
+            //const float alpha = 0.2;
+            uniform mat4 rotationMatrix;
+
             varying vec4 fColor;
             void main()
             {
                 fColor = vColor;
-                gl_Position = vPosition;
+                gl_Position = rotationMatrix * vPosition;
             }
         </script>
         <script id="fragment-shader" type="x-shader/x-fragment">
@@ -20,78 +23,11 @@
 
             varying vec4 fColor;
 
-            // our circle's radius
-            uniform float radius;
-
-            // our circle's thickness
-            uniform float thickness;
-
-            // our brightness
-            uniform float brightness;
-
-            // specify our origin (e.g. center)
-            const vec2 origin = vec2(256, 256);
-
-            // calculates the distance to the origin
-            float dist(vec2 origin)
-            {
-                return sqrt(
-                    pow(origin.x - gl_FragCoord.x, 2.0)
-                    + pow(origin.y - gl_FragCoord.y, 2.0)
-                );
-            }
-
-            // handy function to calculate wether a point
-            // is located between two circles, which share a common origin
-            bool inCircle(vec2 origin, float radius_a, float radius_b)
-            {
-                // calculate the distance between the point and the origin
-                float d = dist(origin);
-
-                // check if the point is between the circles...
-                if (d < radius_a && d > radius_b)
-                {
-                    // ... and return true if it is ...
-                    return true;
-                }
-                // ... or false if it's not.
-                return false;
-            }
-
-            // transform x according to the gaussian function with fixed parameters
-            float gauss(float x, float peak)
-            {
-                return pow(1.5, (- pow((x - peak), 2.0)/(2.0* pow(10.0, 2.0))));
-            }
-
             // main function
             void main()
             {
                 // set the color for the fragment
                 gl_FragColor = fColor;
-
-                // update the color if the fragment is within the circles
-                if (inCircle(origin, radius, radius - thickness))
-                {
-                    // why can't we just do this?
-                    //gl_FragColor.a = 0.7;
-
-                    for (int i = 0; i < 3; ++i)
-                    {
-                        // multiply brightness with gauss function relative to the center
-                        float temp = brightness * gauss(dist(origin), radius - (thickness / 2.0));
-
-                        // if the brightness factor goes below 1.0, things just turn black,
-                        // so we prevent that.
-                        // this has the unfortunate consequence that the circle becomes thinner when
-                        // the brightness is lowered enough.
-                        if (temp < 1.0)
-                        {
-                            temp = 1.0;
-                        }
-                        gl_FragColor[i] *= temp;
-                    }
-                }
             }
         </script>
 
