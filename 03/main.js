@@ -147,7 +147,7 @@ function increaseRadius(val)
         radius = radius_max;
     }
     gl.uniform1f(radius_loc, radius);
-    loadStuff();
+    //loadStuff();
     render();
 }
 
@@ -162,7 +162,7 @@ function decreaseRadius(val)
         radius = radius_min;
     }
     gl.uniform1f(radius_loc, radius);
-    loadStuff();
+    //loadStuff();
     render();
 }
 
@@ -177,7 +177,7 @@ function increaseBrightness(val)
         brightness = brightness_max;
     }
     gl.uniform1f(brightness_loc, brightness);
-    loadStuff();
+    //loadStuff();
     render();
 }
 
@@ -192,6 +192,6 @@ function decreaseBrightness(val)
         brightness = brightness_min;
     }
     gl.uniform1f(brightness_loc, brightness);
-    loadStuff();
+    //loadStuff();
     render();
 }
