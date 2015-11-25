@@ -13,11 +13,25 @@ var vertices;
 // our matrix's location
 var matrixLoc;
 
+// number of points to build our circle with
+var CIRCLE_RESOLUTION = 34;
+
+// radius of our circle
+var CIRCLE_RADIUS = 0.1;
+
 // define keycodes for arrow keys
 var left = 37;
 var up = 38;
 var right = 39;
 var down = 40;
+
+// initialize our rotation matrix as the einheitsmatrix TODO translate
+var rotmat = new Float32Array([
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+]);
 
 window.onload = function init()
 {
@@ -28,17 +42,28 @@ window.onload = function init()
     if (!gl) { alert("WebGL isn't available"); }
 
     // Specify position and color of the vertices
-    vertices = new Float32Array([// vertices
-                                     -0.1, -0.1, 
-                                      0.0,  0.1, 
-                                      0.1, -0.1,
+    //vertices = new Float32Array([// vertices
+                                      //0.0, -0.1, 
+                                      //0.075, -0.075,
+                                      //0.1, 0.0,
+                                      //0.075, 0.075,
+                                      //0.0, 0.1,
+                                      //-0.075, 0.075,
+                                      //-0.1,  0.0,
+                                      //-0.075, -0.075,
 
-                                     // colors
-                                      0, 1, 1, 1,
-                                      0, 0, 1, 1,
-                                      1, 0, 1, 1,
-                                      ]);
+                                     //// colors
+                                      //1, 1, 0, 1,
+                                      //1, 1, 0, 1,
+                                      //1, 1, 0, 1,
+                                      //1, 1, 0, 1,
+                                      //1, 1, 0, 1,
+                                      //1, 1, 0, 1,
+                                      //1, 1, 0, 1,
+                                      //1, 1, 0, 1
+                                      //]);
 
+    vertices = makeCircle();
     // Configure viewport
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
@@ -55,12 +80,12 @@ window.onload = function init()
     loadStuff();
 
 	var alpha = 0.2;
-	var rotmat = new Float32Array([
-		Math.cos(alpha), Math.sin(alpha), 0, 0,
-		-Math.sin(alpha), Math.cos(alpha), 0, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 1
-	]);
+    var rotmat = new Float32Array([
+        Math.cos(alpha), Math.sin(alpha), 0, 0,
+        -Math.sin(alpha), Math.cos(alpha), 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+    ]);
 
 	gl.uniformMatrix4fv(
 		matrixLoc,
@@ -93,7 +118,7 @@ window.onload = function init()
 function render()
 {
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLE_FAN, 0, 3);
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, CIRCLE_RESOLUTION);
 }
 
 /*
@@ -117,7 +142,7 @@ function loadStuff()
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
     var vColor = gl.getAttribLocation(program, "vColor");
-    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 24);
+    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, CIRCLE_RESOLUTION * 2 * 4);
     gl.enableVertexAttribArray(vColor);
 
     var vPosition = gl.getAttribLocation(program, "vPosition");
@@ -125,62 +150,51 @@ function loadStuff()
     gl.enableVertexAttribArray(vPosition);
 }
 
-/*
- * Increase radius by val up until a certain limit
- */
-function increaseRadius(val)
+function makeCircle()
 {
-    radius += val;
-    if (radius > radius_max)
-    {
-        radius = radius_max;
-    }
-    gl.uniform1f(radius_loc, radius);
-    //loadStuff();
-    render();
-}
+    // index to insert points at; initialized as 0
+    var idx = 0;
 
-/*
- * Decrease radius by val up until a certain limit
- */
-function decreaseRadius(val)
-{
-    radius -= val;
-    if (radius < radius_min)
-    {
-        radius = radius_min;
-    }
-    gl.uniform1f(radius_loc, radius);
-    //loadStuff();
-    render();
-}
+    // array to hold all circle coordinates
+    var circle = [];
 
-/*
- * Increase brightness by val up until a certain limit
- */
-function increaseBrightness(val)
-{
-    brightness += val;
-    if (brightness > brightness_max)
-    {
-        brightness = brightness_max;
-    }
-    gl.uniform1f(brightness_loc, brightness);
-    //loadStuff();
-    render();
-}
+    // angle of points; updated iteratively
+    var theta = 0;
 
-/*
- * Decrease brightness by val up until a certain limit
- */
-function decreaseBrightness(val)
-{
-    brightness -= val;
-    if (brightness < brightness_min)
+    // step between angles; depends on circle's resolution
+    var step = (2 * Math.PI) / CIRCLE_RESOLUTION;
+
+    // create all the points in a loop
+    while (true)
     {
-        brightness = brightness_min;
+        if (circle.length == CIRCLE_RESOLUTION * 2)
+        {
+            break;
+        }
+
+        // x coordinate
+        circle[idx++] = CIRCLE_RADIUS * Math.cos(theta);
+
+        // y coordinate
+        circle[idx++] = CIRCLE_RADIUS * Math.sin(theta);
+
+        // update theta
+        theta += step;
     }
-    gl.uniform1f(brightness_loc, brightness);
-    //loadStuff();
-    render();
+
+    // reset idx to 0 in preperation of adding colors
+    idx = 0;
+
+    // add all the colors to the array
+    for (var i = 0; i < CIRCLE_RESOLUTION; i++)
+    {
+        // we add the numbers in this order to create yellow;
+        // yellow has rgba values (1, 1, 0, 1)
+        circle[(CIRCLE_RESOLUTION * 2) + (idx++)] = 1.0;
+        circle[(CIRCLE_RESOLUTION * 2) + (idx++)] = 1.0;
+        circle[(CIRCLE_RESOLUTION * 2) + (idx++)] = 0.0;
+        circle[(CIRCLE_RESOLUTION * 2) + (idx++)] = 1.0;
+    }
+
+    return new Float32Array(circle);
 }
