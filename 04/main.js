@@ -252,7 +252,6 @@ function turnLeft()
 
     // re-render our scene
     render();
-    console.log(transmat);
 }
 
 /*
@@ -292,12 +291,23 @@ function goForward()
     direction_vec[1] = PAC_RADIUS * Math.sin(alpha);
 
     // relevant indices in transmat array: 12 for x and 13 for y
-    pac_pos[0] += 0.1 * direction_vec[0];
-    pac_pos[1] += 0.1 * direction_vec[1];
+    pac_pos[0] += 0.15 * direction_vec[0];
+    pac_pos[1] += 0.15 * direction_vec[1];
+
+    if (pac_pos[0] < -1.07)
+        pac_pos[0] = 1.07;
+
+    if (pac_pos[0] > 1.07)
+        pac_pos[0] = -1.07;
+
+    if (pac_pos[1] < -1.07)
+        pac_pos[1] = 1.07;
+
+    if (pac_pos[1] > 1.07)
+        pac_pos[1] = -1.07;
+
     transmat[12] = pac_pos[0];
     transmat[13] = pac_pos[1];
-
-    console.log(transmat);
 
     updateTransMat();
 
