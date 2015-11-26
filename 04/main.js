@@ -14,10 +14,28 @@ var vertices;
 var matrixLoc;
 
 // number of points to build our circle with
-var CIRCLE_RESOLUTION = 34;
+var PAC_RESOLUTION = 36;
 
 // radius of our circle
-var CIRCLE_RADIUS = 0.1;
+var PAC_RADIUS = 0.1;
+
+// size of pacman's mouth (in vertices)
+var MOUTH_SIZE = 6;
+
+// rotation angle
+var alpha = 0.0;
+
+// alpha's threshold shall be 6.3, as that is equivalent to alpha being 0.0;
+// it would be a rotation of 360 degrees. this is probably for good reasons, but we found out by empirically testing...
+var alpha_threshold = 6.3;
+
+// normalized vector of the direction pacman is facing
+var direction_vec = [0.0, 0.0, // first point is always the origin
+                      1.0, 0.0];// second point is the direction pacman faces;
+                                // default is straight to the right
+
+// pacman's position
+var pac_pos = [0.0, 0.0];
 
 // define keycodes for arrow keys
 var left = 37;
@@ -25,7 +43,7 @@ var up = 38;
 var right = 39;
 var down = 40;
 
-// initialize our rotation matrix as the einheitsmatrix TODO translate
+// initialize our rotation matrix as the identity matrix
 var rotmat = new Float32Array([
     1, 0, 0, 0,
     0, 1, 0, 0,
@@ -36,34 +54,13 @@ var rotmat = new Float32Array([
 window.onload = function init()
 {
     // Get canvas and setup webGL
-    
     canvas = document.getElementById("gl-canvas");
     gl = WebGLUtils.setupWebGL(canvas);
     if (!gl) { alert("WebGL isn't available"); }
 
-    // Specify position and color of the vertices
-    //vertices = new Float32Array([// vertices
-                                      //0.0, -0.1, 
-                                      //0.075, -0.075,
-                                      //0.1, 0.0,
-                                      //0.075, 0.075,
-                                      //0.0, 0.1,
-                                      //-0.075, 0.075,
-                                      //-0.1,  0.0,
-                                      //-0.075, -0.075,
+    // populate our vertex array
+    vertices = makePacman();
 
-                                     //// colors
-                                      //1, 1, 0, 1,
-                                      //1, 1, 0, 1,
-                                      //1, 1, 0, 1,
-                                      //1, 1, 0, 1,
-                                      //1, 1, 0, 1,
-                                      //1, 1, 0, 1,
-                                      //1, 1, 0, 1,
-                                      //1, 1, 0, 1
-                                      //]);
-
-    vertices = makeCircle();
     // Configure viewport
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
@@ -79,7 +76,6 @@ window.onload = function init()
 	matrixLoc = gl.getUniformLocation(program, "rotationMatrix");
     loadStuff();
 
-	var alpha = 0.2;
     var rotmat = new Float32Array([
         Math.cos(alpha), Math.sin(alpha), 0, 0,
         -Math.sin(alpha), Math.cos(alpha), 0, 0,
@@ -92,33 +88,34 @@ window.onload = function init()
 		false,
 		rotmat
 	);
+
     // add an event listener to listen for keypresses
-    // we add it to the window because the canvas can't handle keypresses/
-    // keydowns, as it can't be focused.
-//    window.addEventListener("keydown", function(event) {
-//        switch(event.keyCode)
-//        {
-//            case left:
-//                decreaseRadius(5.0);
-//                break;
-//            case right:
-//                increaseRadius(5.0);
-//                break;
-//            case up:
-//                increaseBrightness(0.05);
-//                break;
-//            case down:
-//                decreaseBrightness(0.05);
-//                break;
-//        }
-//    });
+    window.addEventListener("keydown", function(event) {
+        switch(event.keyCode)
+        {
+            case left:
+                turnLeft();
+                break;
+            case right:
+                turnRight();
+                break;
+            case up:
+                goForward();
+                break;
+            case down:
+                goBackward();
+                break;
+        }
+    });
+
+    // render everything
     render();
 };
 
 function render()
 {
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLE_FAN, 0, CIRCLE_RESOLUTION);
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, PAC_RESOLUTION - MOUTH_SIZE);
 }
 
 /*
@@ -141,60 +138,147 @@ function loadStuff()
     gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-    var vColor = gl.getAttribLocation(program, "vColor");
-    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, CIRCLE_RESOLUTION * 2 * 4);
-    gl.enableVertexAttribArray(vColor);
+    // not needed; we statically color everything yellow in our fragment shader,
+    // which makes things a bit simpler
+
+    //var vColor = gl.getAttribLocation(program, "vColor");
+    //gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, PAC_RESOLUTION * 2 * 4);
+    //gl.enableVertexAttribArray(vColor);
 
     var vPosition = gl.getAttribLocation(program, "vPosition");
     gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vPosition);
 }
 
-function makeCircle()
+/*
+ * Create and populate an array with vertices;
+ * first vertex is the origin (0, 0), and a few vertices of the would-be circle
+ * are ignored to make a pacman-shape
+ * @return Float32Array
+ */
+function makePacman()
 {
     // index to insert points at; initialized as 0
-    var idx = 0;
+    var idx = 2;
+
+    // count our number of iterations
+    var count = 0;
 
     // array to hold all circle coordinates
-    var circle = [];
+    var circle = [0.0, 0.0];
 
     // angle of points; updated iteratively
     var theta = 0;
 
     // step between angles; depends on circle's resolution
-    var step = (2 * Math.PI) / CIRCLE_RESOLUTION;
+    var step = (2 * Math.PI) / (PAC_RESOLUTION - 2);
 
     // create all the points in a loop
     while (true)
     {
-        if (circle.length == CIRCLE_RESOLUTION * 2)
+        count++;
+
+        // skip the first few vertices of our would-be circle ...
+        if (count <= MOUTH_SIZE/2)
+        {
+            theta += step;
+            continue;
+        }
+
+        // ... as well as the last few!
+        // this creates a vertex-free area in the shape of pacman's mouth!
+        if (circle.length == (PAC_RESOLUTION * 2) - MOUTH_SIZE)
         {
             break;
         }
 
         // x coordinate
-        circle[idx++] = CIRCLE_RADIUS * Math.cos(theta);
+        circle[idx++] = PAC_RADIUS * Math.cos(theta);
 
         // y coordinate
-        circle[idx++] = CIRCLE_RADIUS * Math.sin(theta);
+        circle[idx++] = PAC_RADIUS * Math.sin(theta);
 
         // update theta
         theta += step;
     }
 
-    // reset idx to 0 in preperation of adding colors
-    idx = 0;
-
-    // add all the colors to the array
-    for (var i = 0; i < CIRCLE_RESOLUTION; i++)
-    {
-        // we add the numbers in this order to create yellow;
-        // yellow has rgba values (1, 1, 0, 1)
-        circle[(CIRCLE_RESOLUTION * 2) + (idx++)] = 1.0;
-        circle[(CIRCLE_RESOLUTION * 2) + (idx++)] = 1.0;
-        circle[(CIRCLE_RESOLUTION * 2) + (idx++)] = 0.0;
-        circle[(CIRCLE_RESOLUTION * 2) + (idx++)] = 1.0;
-    }
-
     return new Float32Array(circle);
+}
+
+/*
+ * turn pacman to the left (i.e. counter-clockwise)
+ */
+function turnLeft()
+{
+    // increase our rotation angle
+    alpha += 0.1;
+    // this query goes wrong because of float inaccuracies
+    //if (alpha == alpha_threshold)
+    // we have to use this clumsy formula;
+    // since we only ever increment by 0.1, the would-be inaccuracies resulting
+    // from the 0.05 magic number can be ignored.
+    if (alpha >= alpha_threshold -0.05 && alpha < alpha_threshold + 0.05)
+        alpha = 0.0;
+
+    // create a new rotation matrix
+    rotmat = new Float32Array([
+        Math.cos(alpha), Math.sin(alpha), 0, 0,
+        -Math.sin(alpha), Math.cos(alpha), 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+    ]);
+
+    // send the rotation matrix to our vertex shader
+	gl.uniformMatrix4fv(
+		matrixLoc,
+		false,
+		rotmat
+	);
+
+    // re-render our scene
+    render();
+}
+
+/*
+ * turn pacman to the right (i.e. clockwise)
+ */
+function turnRight()
+{
+    // decrease our angle
+    alpha -= 0.1;
+    // if alpha becomes negative, we wrap it around to 6.2,
+    // so it always stays within the interval [0.0, 6.3]
+    if (alpha < 0.0)
+        alpha = alpha_threshold - 0.1;
+
+    rotmat = new Float32Array([
+        Math.cos(alpha), Math.sin(alpha), 0, 0,
+        -Math.sin(alpha), Math.cos(alpha), 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+    ]);
+
+	gl.uniformMatrix4fv(
+		matrixLoc,
+		false,
+		rotmat
+	);
+
+    render();
+}
+
+/*
+ * move pacman forward (i.e. the way the mouth is facing)
+ */
+function goForward()
+{
+
+}
+
+/*
+ * move pacman backward (i.e. the opposite way the mouth is facing)
+ */
+function goBackward()
+{
+
 }

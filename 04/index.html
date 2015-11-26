@@ -4,6 +4,8 @@
         <meta charset="utf-8"/>
         <title>Blatt 04</title>
         
+        <link rel="stylesheet" type="text/css" href="main.css">
+
         <script id="vertex-shader" type="x-shader/x-vertex">
             attribute vec4 vPosition;
             attribute vec4 vColor;
@@ -15,50 +17,57 @@
             {
                 fColor = vColor;
                 gl_Position = rotationMatrix * vPosition;
+                //gl_Position = vPosition;
             }
         </script>
         <script id="fragment-shader" type="x-shader/x-fragment">
             precision mediump float;
 
-            varying vec4 fColor;
+            //varying vec4 fColor;
+
+            // NOTE: we now create the mouth through javascript. this was a pretty cool solution though,
+            // so we're keeping it here
 
             // in this fragment shader, we want to create pacman's mouth
             // this basically 'only' requires us to specify a triangle
             // within the circle that is pacman, and color each fragment within white.
 
             // specify the triangle we want to cut out
-            const vec2 p1 = vec2(256.0, 256.0);
-            const vec2 p2 = vec2(512.0, 384.0);
-            const vec2 p3 = vec2(512.0, 128.0);
+            //const vec2 p1 = vec2(256.0, 256.0);
+            //const vec2 p2 = vec2(512.0, 384.0);
+            //const vec2 p3 = vec2(512.0, 128.0);
 
             /*
              * This function checks wether the current fragment is within our triangle;
              * the formula is enormous and ugly; it uses barycentric coordinates.
              * Feel free to google, we won't explain it here
              */
-            bool inTriangle()
-            {
-                float alpha = ((p2.y - p3.y)*(gl_FragCoord.x - p3.x) + (p3.x - p2.x)*(gl_FragCoord.y - p3.y)) /
-                              ((p2.y - p3.y)*(p1.x - p3.x) + (p3.x - p2.x)*(p1.y - p3.y));
-                float beta = ((p3.y - p1.y)*(gl_FragCoord.x - p3.x) + (p1.x - p3.x)*(gl_FragCoord.y - p3.y)) /
-                             ((p2.y - p3.y)*(p1.x - p3.x) + (p3.x - p2.x)*(p1.y - p3.y));
-                float gamma = 1.0 - alpha - beta;
+            //bool inTriangle()
+            //{
+            //    float alpha = ((p2.y - p3.y)*(gl_FragCoord.x - p3.x) + (p3.x - p2.x)*(gl_FragCoord.y - p3.y)) /
+            //                  ((p2.y - p3.y)*(p1.x - p3.x) + (p3.x - p2.x)*(p1.y - p3.y));
+            //    float beta = ((p3.y - p1.y)*(gl_FragCoord.x - p3.x) + (p1.x - p3.x)*(gl_FragCoord.y - p3.y)) /
+            //                 ((p2.y - p3.y)*(p1.x - p3.x) + (p3.x - p2.x)*(p1.y - p3.y));
+            //    float gamma = 1.0 - alpha - beta;
 
-                return (alpha > 0.0) && (beta > 0.0) && (gamma > 0.0);
-            }
+            //    return (alpha > 0.0) && (beta > 0.0) && (gamma > 0.0);
+            //}
 
             // main function
             void main()
             {
+                // just make everything yellow...
+                gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);
+
                 // set the color to white if we're inside the triangle...
-                if (inTriangle())
-                {
-                    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-                }
-                else // ... or leave it unchanged
-                {
-                    gl_FragColor = fColor;
-                }
+                //if (inTriangle())
+                //{
+                //    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+                //}
+                //else // ... or leave it unchanged
+                //{
+                //    gl_FragColor = fColor;
+                //}
             }
         </script>
 
