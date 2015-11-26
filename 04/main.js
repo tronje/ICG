@@ -10,8 +10,11 @@ var canvas;
 // our vertices
 var vertices;
 
-// our matrix's location
-var matrixLoc;
+// our translation matrix's location
+var transLoc;
+
+// our rotation matrix's location
+var rotLoc;
 
 // number of points to build our circle with
 var PAC_RESOLUTION = 36;
@@ -30,9 +33,7 @@ var alpha = 0.0;
 var alpha_threshold = 6.3;
 
 // normalized vector of the direction pacman is facing
-var direction_vec = [0.0, 0.0, // first point is always the origin
-                      1.0, 0.0];// second point is the direction pacman faces;
-                                // default is straight to the right
+var direction_vec = [1.0, 0.0]
 
 // pacman's position
 var pac_pos = [0.0, 0.0];
@@ -42,6 +43,14 @@ var left = 37;
 var up = 38;
 var right = 39;
 var down = 40;
+
+// initialize our translation matrix as the identity matrix
+var transmat = [
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+];
 
 // initialize our rotation matrix as the identity matrix
 var rotmat = new Float32Array([
@@ -73,20 +82,25 @@ window.onload = function init()
     brightness_loc = gl.getUniformLocation(program, "brightness");
     gl.useProgram(program);
 
-	matrixLoc = gl.getUniformLocation(program, "rotationMatrix");
+    // get the location of our translation matrix in the shader
+	transLoc = gl.getUniformLocation(program, "translationMatrix");
+
+    // get the location of our rotation matrix in the shader
+	rotLoc = gl.getUniformLocation(program, "rotationMatrix");
     loadStuff();
 
-    var rotmat = new Float32Array([
-        Math.cos(alpha), Math.sin(alpha), 0, 0,
-        -Math.sin(alpha), Math.cos(alpha), 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1
-    ]);
-
+    // send the rotation matrix to our vertex shader
 	gl.uniformMatrix4fv(
-		matrixLoc,
+		rotLoc,
 		false,
 		rotmat
+	);
+
+    // send the translation matrix to our vertex shader
+	gl.uniformMatrix4fv(
+		transLoc,
+		false,
+		new Float32Array(transmat)
 	);
 
     // add an event listener to listen for keypresses
@@ -102,9 +116,9 @@ window.onload = function init()
             case up:
                 goForward();
                 break;
-            case down:
-                goBackward();
-                break;
+            //case down:
+                //goBackward();
+                //break;
         }
     });
 
@@ -212,6 +226,7 @@ function turnLeft()
 {
     // increase our rotation angle
     alpha += 0.1;
+
     // this query goes wrong because of float inaccuracies
     //if (alpha == alpha_threshold)
     // we have to use this clumsy formula;
@@ -230,13 +245,14 @@ function turnLeft()
 
     // send the rotation matrix to our vertex shader
 	gl.uniformMatrix4fv(
-		matrixLoc,
+		rotLoc,
 		false,
 		rotmat
 	);
 
     // re-render our scene
     render();
+    console.log(transmat);
 }
 
 /*
@@ -259,7 +275,7 @@ function turnRight()
     ]);
 
 	gl.uniformMatrix4fv(
-		matrixLoc,
+		rotLoc,
 		false,
 		rotmat
 	);
@@ -272,13 +288,40 @@ function turnRight()
  */
 function goForward()
 {
+    direction_vec[0] = PAC_RADIUS * Math.cos(alpha);
+    direction_vec[1] = PAC_RADIUS * Math.sin(alpha);
 
+    // relevant indices in transmat array: 12 for x and 13 for y
+    pac_pos[0] += 0.1 * direction_vec[0];
+    pac_pos[1] += 0.1 * direction_vec[1];
+    transmat[12] = pac_pos[0];
+    transmat[13] = pac_pos[1];
+
+    console.log(transmat);
+
+    updateTransMat();
+
+    render();
 }
 
 /*
  * move pacman backward (i.e. the opposite way the mouth is facing)
  */
-function goBackward()
-{
+//function goBackward()
+//{
 
+//}
+
+/*
+ * update the translation matrix in the shader from the local array
+ */
+function updateTransMat()
+{
+    var tempmat = new Float32Array(transmat);
+
+    gl.uniformMatrix4fv(
+        transLoc,
+        false,
+        tempmat
+    );
 }

@@ -10,13 +10,14 @@
             attribute vec4 vPosition;
             attribute vec4 vColor;
 
+            uniform mat4 translationMatrix;
             uniform mat4 rotationMatrix;
 
             varying vec4 fColor;
             void main()
             {
                 fColor = vColor;
-                gl_Position = rotationMatrix * vPosition;
+                gl_Position = translationMatrix * rotationMatrix * vPosition;
                 //gl_Position = vPosition;
             }
         </script>
@@ -40,7 +41,7 @@
             /*
              * This function checks wether the current fragment is within our triangle;
              * the formula is enormous and ugly; it uses barycentric coordinates.
-             * Feel free to google, we won't explain it here
+             * never again...
              */
             //bool inTriangle()
             //{
