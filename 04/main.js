@@ -32,6 +32,9 @@ var alpha = 0.0;
 // it would be a rotation of 360 degrees. this is probably for good reasons, but we found out by 'testing' empirically...
 var alpha_threshold = 6.3;
 
+// alpha's location in our shader's memory
+var alphaLoc;
+
 // the point pacman is looking at
 var direction = [1.0, 0.0]
 
@@ -103,8 +106,8 @@ window.onload = function init()
 		new Float32Array(transmat)
 	);
 
-    var alphaPos = gl.getUniformLocation(program, "alpha");
-    gl.uniform1f(alphaPos, false, alpha);
+    alphaLoc = gl.getUniformLocation(program, "alpha");
+    gl.uniform1f(alphaLoc, false, alpha);
 
     // add an event listener to listen for keypresses
     window.addEventListener("keydown", function(event) {
@@ -157,7 +160,6 @@ function loadStuff()
 
     // not needed; we statically color everything yellow in our fragment shader,
     // which makes things a bit simpler
-
     //var vColor = gl.getAttribLocation(program, "vColor");
     //gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, PAC_RESOLUTION * 2 * 4);
     //gl.enableVertexAttribArray(vColor);
@@ -253,8 +255,7 @@ function turnLeft()
 		rotmat
 	);
 
-    var alphaPos = gl.getUniformLocation(program, "alpha");
-    gl.uniform1f(alphaPos, false, alpha);
+    gl.uniform1f(alphaLoc, false, alpha);
 
     // re-render our scene
     render();
@@ -285,8 +286,7 @@ function turnRight()
 		rotmat
 	);
 
-    var alphaPos = gl.getUniformLocation(program, "alpha");
-    gl.uniform1f(alphaPos, false, alpha);
+    gl.uniform1f(alphaLoc, false, alpha);
 
     render();
 }

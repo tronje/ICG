@@ -28,14 +28,19 @@
             //varying vec4 fColor;
             varying float alpha;
 
+            const float d = 20.0;
+
             // main function
             void main()
             {
-                //if ((gl_FragCoord.x >= eyePos.x + 0.015 && gl_FragCoord.x <= eyePos.x - 0.015)
-                //    && (gl_FragCoord.y >= eyePos.y + 0.015 && gl_FragCoord.y <= eyePos.y - 0.015))
-                if ((gl_FragCoord.x == 256.0 + 3.0 * cos(alpha)) && (gl_FragCoord.y == 256.0 + 3.0 * sin(alpha)))
+                // (try to) draw an eye
+                if ((gl_FragCoord.x <= 256.0 + d * cos(alpha)) && (gl_FragCoord.y <= 256.0 + d * sin(alpha))
+                    && (gl_FragCoord.x >= 254.0 + d * cos(alpha)) && (gl_FragCoord.y >= 254.0 + d * sin(alpha)))
                 {
-                    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+                    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+                    // this doesn't work at all. the 256.0 and 254.0 are just placeholders, of course,
+                    // but it still doesn't work. Uncomment the below color assignment to see...
+                    //gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
                 }
                 else
                 {
