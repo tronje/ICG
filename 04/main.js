@@ -29,11 +29,11 @@ var MOUTH_SIZE = 6;
 var alpha = 0.0;
 
 // alpha's threshold shall be 6.3, as that is equivalent to alpha being 0.0;
-// it would be a rotation of 360 degrees. this is probably for good reasons, but we found out by empirically testing...
+// it would be a rotation of 360 degrees. this is probably for good reasons, but we found out by 'testing' empirically...
 var alpha_threshold = 6.3;
 
-// normalized vector of the direction pacman is facing
-var direction_vec = [1.0, 0.0]
+// the point pacman is looking at
+var direction = [1.0, 0.0]
 
 // pacman's position
 var pac_pos = [0.0, 0.0];
@@ -103,6 +103,9 @@ window.onload = function init()
 		new Float32Array(transmat)
 	);
 
+    var alphaPos = gl.getUniformLocation(program, "alpha");
+    gl.uniform1f(alphaPos, false, alpha);
+
     // add an event listener to listen for keypresses
     window.addEventListener("keydown", function(event) {
         switch(event.keyCode)
@@ -122,7 +125,7 @@ window.onload = function init()
         }
     });
 
-    // render everything
+    // render everything for the first time
     render();
 };
 
@@ -250,6 +253,9 @@ function turnLeft()
 		rotmat
 	);
 
+    var alphaPos = gl.getUniformLocation(program, "alpha");
+    gl.uniform1f(alphaPos, false, alpha);
+
     // re-render our scene
     render();
 }
@@ -279,6 +285,9 @@ function turnRight()
 		rotmat
 	);
 
+    var alphaPos = gl.getUniformLocation(program, "alpha");
+    gl.uniform1f(alphaPos, false, alpha);
+
     render();
 }
 
@@ -287,12 +296,12 @@ function turnRight()
  */
 function goForward()
 {
-    direction_vec[0] = PAC_RADIUS * Math.cos(alpha);
-    direction_vec[1] = PAC_RADIUS * Math.sin(alpha);
+    direction[0] = PAC_RADIUS * Math.cos(alpha);
+    direction[1] = PAC_RADIUS * Math.sin(alpha);
 
     // relevant indices in transmat array: 12 for x and 13 for y
-    pac_pos[0] += 0.15 * direction_vec[0];
-    pac_pos[1] += 0.15 * direction_vec[1];
+    pac_pos[0] += 0.15 * direction[0];
+    pac_pos[1] += 0.15 * direction[1];
 
     if (pac_pos[0] < -1.07)
         pac_pos[0] = 1.07;
@@ -316,6 +325,7 @@ function goForward()
 
 /*
  * move pacman backward (i.e. the opposite way the mouth is facing)
+ * UNNEEDED!
  */
 //function goBackward()
 //{
@@ -334,4 +344,13 @@ function updateTransMat()
         false,
         tempmat
     );
+}
+
+/*
+ * calculate the position of pacman's eye, and return it as an array with two elements
+ * @return Float32Array
+ */
+function eyePosition()
+{
+    return new Float32Array([0.05 * Math.cos(alpha), 0.05 * Math.sin(alpha)]);
 }

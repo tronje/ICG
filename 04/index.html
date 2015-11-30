@@ -14,6 +14,7 @@
             uniform mat4 rotationMatrix;
 
             varying vec4 fColor;
+            varying float alpha;
             void main()
             {
                 fColor = vColor;
@@ -25,50 +26,22 @@
             precision mediump float;
 
             //varying vec4 fColor;
-
-            // NOTE: we now create the mouth through javascript. this was a pretty cool solution though,
-            // so we're keeping it here
-
-            // in this fragment shader, we want to create pacman's mouth
-            // this basically 'only' requires us to specify a triangle
-            // within the circle that is pacman, and color each fragment within white.
-
-            // specify the triangle we want to cut out
-            //const vec2 p1 = vec2(256.0, 256.0);
-            //const vec2 p2 = vec2(512.0, 384.0);
-            //const vec2 p3 = vec2(512.0, 128.0);
-
-            /*
-             * This function checks wether the current fragment is within our triangle;
-             * the formula is enormous and ugly; it uses barycentric coordinates.
-             * never again...
-             */
-            //bool inTriangle()
-            //{
-            //    float alpha = ((p2.y - p3.y)*(gl_FragCoord.x - p3.x) + (p3.x - p2.x)*(gl_FragCoord.y - p3.y)) /
-            //                  ((p2.y - p3.y)*(p1.x - p3.x) + (p3.x - p2.x)*(p1.y - p3.y));
-            //    float beta = ((p3.y - p1.y)*(gl_FragCoord.x - p3.x) + (p1.x - p3.x)*(gl_FragCoord.y - p3.y)) /
-            //                 ((p2.y - p3.y)*(p1.x - p3.x) + (p3.x - p2.x)*(p1.y - p3.y));
-            //    float gamma = 1.0 - alpha - beta;
-
-            //    return (alpha > 0.0) && (beta > 0.0) && (gamma > 0.0);
-            //}
+            varying float alpha;
 
             // main function
             void main()
             {
-                // just make everything yellow...
-                gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);
-
-                // set the color to white if we're inside the triangle...
-                //if (inTriangle())
-                //{
-                //    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-                //}
-                //else // ... or leave it unchanged
-                //{
-                //    gl_FragColor = fColor;
-                //}
+                //if ((gl_FragCoord.x >= eyePos.x + 0.015 && gl_FragCoord.x <= eyePos.x - 0.015)
+                //    && (gl_FragCoord.y >= eyePos.y + 0.015 && gl_FragCoord.y <= eyePos.y - 0.015))
+                if ((gl_FragCoord.x == 256.0 + 3.0 * cos(alpha)) && (gl_FragCoord.y == 256.0 + 3.0 * sin(alpha)))
+                {
+                    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+                }
+                else
+                {
+                    // just make everything yellow...
+                    gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);
+                }
             }
         </script>
 
@@ -83,6 +56,5 @@
         <canvas id="gl-canvas" width="512" height="512">
             If you see this, your browser doesn't support WebGL.
         </canvas>
-        
     </body>
 </html>
