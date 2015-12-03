@@ -1,3 +1,5 @@
+# directories called 'build' can usually be ignored
+build
 # tex related files
 #*.pdf
 *.aux
