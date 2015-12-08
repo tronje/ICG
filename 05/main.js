@@ -7,9 +7,15 @@ var program;
 // our canvas
 var canvas;
 
-// our vertices
-var vertices;
+// vertices that make up the grid
+var grid_vertices;
 
+// size of our grid
+var grid_size = 4;
+
+// vertices that make up the boxes
+var box_vertices = new Float32Array([-1, 1, -0.5, 1, -1, 0.5, -0.5, 0.5]);
+var box_size;
 
 window.onload = function init()
 {
@@ -18,8 +24,11 @@ window.onload = function init()
     gl = WebGLUtils.setupWebGL(canvas);
     if (!gl) { alert("WebGL isn't available"); }
 
-    // populate our vertex array
-    vertices = makeRaster(8);
+    // get our box size
+    box_size = canvas.width / grid_size;
+
+    // populate our grid vertex array
+    grid_vertices = new Float32Array(makeGrid((grid_size)));
 
     // Configure viewport
     gl.viewport(0, 0, canvas.width, canvas.height);
@@ -31,23 +40,15 @@ window.onload = function init()
 
     loadStuff();
 
-    // add an event listener to listen for keypresses
-    window.addEventListener("keydown", function(event) {
-        switch(event.keyCode)
-        {
-            case left:
-                turnLeft();
-                break;
-            case right:
-                turnRight();
-                break;
-            case up:
-                goForward();
-                break;
-            //case down:
-                //goBackward();
-                //break;
-        }
+    window.addEventListener("mousedown", function(event) {
+        var temp = getSquare(
+            normValue(event.clientX, 10, 522, -1, 1),
+            normValue(event.clientY, 10, 522, 1, -1)
+        );
+        temp = new Float32Array(temp);
+        box_vertices = temp;
+        loadStuff();
+        render();
     });
 
     // render everything for the first time
@@ -57,7 +58,17 @@ window.onload = function init()
 function render()
 {
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.LINES, 0, 28);
+    gl.drawArrays(gl.LINES, 0, (grid_size - 1) * 4);
+
+    var mybuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, mybuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, box_vertices, gl.STATIC_DRAW);
+
+    var vPosition = gl.getAttribLocation(program, "vPosition");
+    gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vPosition);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 }
 
 /*
@@ -78,9 +89,9 @@ function loadStuff()
 {
     var bufferId = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
-    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, grid_vertices, gl.STATIC_DRAW);
 
-    // not needed; we statically color everything yellow in our fragment shader,
+    // not needed; we statically color everything in our fragment shader,
     // which makes things a bit simpler
     //var vColor = gl.getAttribLocation(program, "vColor");
     //gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, PAC_RESOLUTION * 2 * 4);
@@ -95,158 +106,99 @@ function loadStuff()
  * Create and populate an array with vertices;
  * @return Float32Array
  */
-function makeRaster(size)
+function makeGrid()
 {
-    var raster = [];
-    var box_size = canvas.width / size;
+    var grid = [];
 
-    for (var i = 1; i < size; i++)
+    for (var i = 1; i < grid_size; i++)
     {
         var temp = normValue(i * box_size, 0, canvas.width, -1.0, 1.0);
-        raster.push(temp);
-        raster.push(-1.0);
-        raster.push(temp);
-        raster.push(1.0);
+        grid.push(temp);
+        grid.push(-1.0);
+        grid.push(temp);
+        grid.push(1.0);
     }
     
-    for (var i = 1; i < size; i++)
+    for (var i = 1; i < grid_size; i++)
     {
         var temp = normValue(i * box_size, 0, canvas.height, -1.0, 1.0);
-        raster.push(-1.0);
-        raster.push(temp);
-        raster.push(1.0);
-        raster.push(temp);
+        grid.push(-1.0);
+        grid.push(temp);
+        grid.push(1.0);
+        grid.push(temp);
     }
-    return new Float32Array(raster);
+    return grid;
 }
 
 /*
- * turn pacman to the left (i.e. counter-clockwise)
+ * Get a square in our grid based on mouse coordinate;
+ * i.e. input one point and get the square in which that point is located.
  */
-function turnLeft()
+function getSquare(x, y)
 {
-    // increase our rotation angle
-    alpha += 0.1;
+    var left_bound;
+    var right_bound;
+    var top_bound;
+    var bottom_bound;
 
-    // this query goes wrong because of float inaccuracies
-    //if (alpha == alpha_threshold)
-    // we have to use this clumsy formula;
-    // since we only ever increment by 0.1, the would-be inaccuracies resulting
-    // from the 0.05 magic number can be ignored.
-    if (alpha >= alpha_threshold -0.05 && alpha < alpha_threshold + 0.05)
-        alpha = 0.0;
+    for (var i = 0; i < grid_vertices.length / 2; i += 4)
+    {
+        if (grid_vertices[i] <= x && Math.abs(grid_vertices[i] - x) < box_size)
+        {
+            left_bound = grid_vertices[i];
+        }
+        else if (grid_vertices[i] > x && Math.abs(grid_vertices[i] - x) < box_size)
+        {
+            right_bound = grid_vertices[i];
+        }
 
-    // create a new rotation matrix
-    rotmat = new Float32Array([
-        Math.cos(alpha), Math.sin(alpha), 0, 0,
-        -Math.sin(alpha), Math.cos(alpha), 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1
-    ]);
+        if (left_bound != undefined && right_bound != undefined)
+            break;
+    }
 
-    // send the rotation matrix to our vertex shader
-	gl.uniformMatrix4fv(
-		rotLoc,
-		false,
-		rotmat
-	);
+    if (left_bound == undefined)
+        left_bound = -1.0;
 
-    gl.uniform1f(alphaLoc, false, alpha);
+    if (right_bound == undefined)
+        right_bound = 1.0;
 
-    // re-render our scene
-    render();
-}
+    if (x < 0.0 && left_bound > 0.0)
+        left_bound *= -1;
 
-/*
- * turn pacman to the right (i.e. clockwise)
- */
-function turnRight()
-{
-    // decrease our angle
-    alpha -= 0.1;
-    // if alpha becomes negative, we wrap it around to 6.2,
-    // so it always stays within the interval [0.0, 6.3]
-    if (alpha < 0.0)
-        alpha = alpha_threshold - 0.1;
+    if (x < 0.0 && right_bound > 0.0)
+        right_bound *= -1;
 
-    rotmat = new Float32Array([
-        Math.cos(alpha), Math.sin(alpha), 0, 0,
-        -Math.sin(alpha), Math.cos(alpha), 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1
-    ]);
+    for (var i = grid_vertices.length / 2 + 1; i < grid_vertices.length; i += 4)
+    {
+        if (grid_vertices[i] > y && Math.abs(grid_vertices[i] - y) < box_size)
+        {
+            top_bound = grid_vertices[i];
+        }
+        else if (grid_vertices[i] <= y && Math.abs(grid_vertices[i] - y) < box_size)
+        {
+            bottom_bound = grid_vertices[i];
+        }
 
-	gl.uniformMatrix4fv(
-		rotLoc,
-		false,
-		rotmat
-	);
+        if (bottom_bound != undefined && top_bound != undefined)
+            break;
+    }
 
-    gl.uniform1f(alphaLoc, false, alpha);
+    if (top_bound == undefined)
+        top_bound = 1.0;
 
-    render();
-}
+    if (bottom_bound == undefined)
+        bottom_bound = -1.0;
 
-/*
- * move pacman forward (i.e. the way the mouth is facing)
- */
-function goForward()
-{
-    direction[0] = PAC_RADIUS * Math.cos(alpha);
-    direction[1] = PAC_RADIUS * Math.sin(alpha);
+    if (y < 0.0 && top_bound > 0.0)
+        top_bound *= -1;
 
-    // relevant indices in transmat array: 12 for x and 13 for y
-    pac_pos[0] += 0.15 * direction[0];
-    pac_pos[1] += 0.15 * direction[1];
+    if (y < 0.0 && bottom_bound > 0.0)
+        bottom_bound *= -1;
 
-    if (pac_pos[0] < -1.07)
-        pac_pos[0] = 1.07;
+    var res = [left_bound, top_bound,
+               right_bound, top_bound,
+               left_bound, bottom_bound,
+               right_bound, bottom_bound]
 
-    if (pac_pos[0] > 1.07)
-        pac_pos[0] = -1.07;
-
-    if (pac_pos[1] < -1.07)
-        pac_pos[1] = 1.07;
-
-    if (pac_pos[1] > 1.07)
-        pac_pos[1] = -1.07;
-
-    transmat[12] = pac_pos[0];
-    transmat[13] = pac_pos[1];
-
-    updateTransMat();
-
-    render();
-}
-
-/*
- * move pacman backward (i.e. the opposite way the mouth is facing)
- * UNNEEDED!
- */
-//function goBackward()
-//{
-
-//}
-
-/*
- * update the translation matrix in the shader from the local array
- */
-function updateTransMat()
-{
-    var tempmat = new Float32Array(transmat);
-
-    gl.uniformMatrix4fv(
-        transLoc,
-        false,
-        tempmat
-    );
-}
-
-/*
- * calculate the position of pacman's eye, and return it as an array with two elements
- * @return Float32Array
- */
-function eyePosition()
-{
-    return new Float32Array([0.05 * Math.cos(alpha), 0.05 * Math.sin(alpha)]);
+    return res;
 }
