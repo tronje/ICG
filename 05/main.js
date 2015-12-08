@@ -11,10 +11,10 @@ var canvas;
 var grid_vertices;
 
 // size of our grid
-var grid_size = 4;
+var grid_size = 8;
 
 // vertices that make up the boxes
-var box_vertices = new Float32Array([-1, 1, -0.5, 1, -1, 0.5, -0.5, 0.5]);
+var box_vertices = new Float32Array([0, 0, 0, 0, 0, 0, 0, 0]);
 var box_size;
 
 window.onload = function init()
