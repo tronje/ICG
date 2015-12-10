@@ -169,9 +169,9 @@ window.onload = function init()
     {
         mat4.rotate(modelMatrix, modelMatrix, 0.01, rotvec);
         gl.uniformMatrix4fv(modelMatrixLoc, false, modelMatrix);
-        render();
     }
-    setInterval(rotate, 150);
+    setInterval(rotate, 50);
+    render();
 };
 
 
