@@ -159,17 +159,21 @@ window.onload = function init()
     gl.enableVertexAttribArray(vPosition);
     
     // Set and load modelMatrix
-    
-    modelMatrix = new Float32Array([1,0,0,0,
-                                    0,1,0,0,
-                                    0,0,1,0,
-                                    0,0,0,1]);
-    
-    modelMatrixLoc = gl.getUniformLocation(program, "modelMatrix");
-    gl.uniformMatrix4fv(modelMatrixLoc, false, modelMatrix);
-    
-    render();
+    modelMatrix = mat4.create();
+    modelMatrix = new Float32Array(modelMatrix);
+    var rotvec = vec3.create();
+    vec3.set(rotvec, 0, 1, 1);
+
+    function rotate()
+    {
+        mat4.rotate(modelMatrix, modelMatrix, 0.02, rotvec);
+        modelMatrixLoc = gl.getUniformLocation(program, "modelMatrix");
+        gl.uniformMatrix4fv(modelMatrixLoc, false, modelMatrix);
+        render();
+    }
+    setInterval(rotate, 150);
 };
+
 
 function render()
 {
