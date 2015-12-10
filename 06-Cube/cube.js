@@ -166,12 +166,12 @@ window.onload = function init()
 
     function rotate()
     {
-        mat4.rotate(modelMatrix, modelMatrix, 0.02, rotvec);
+        mat4.rotate(modelMatrix, modelMatrix, 0.01, rotvec);
         modelMatrixLoc = gl.getUniformLocation(program, "modelMatrix");
         gl.uniformMatrix4fv(modelMatrixLoc, false, modelMatrix);
         render();
     }
-    setInterval(rotate, 150);
+    setInterval(rotate, 50);
 };
 
 
