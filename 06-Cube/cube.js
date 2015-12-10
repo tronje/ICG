@@ -163,15 +163,15 @@ window.onload = function init()
     modelMatrix = new Float32Array(modelMatrix);
     var rotvec = vec3.create();
     vec3.set(rotvec, 0, 1, 1);
+    modelMatrixLoc = gl.getUniformLocation(program, "modelMatrix");
 
     function rotate()
     {
         mat4.rotate(modelMatrix, modelMatrix, 0.01, rotvec);
-        modelMatrixLoc = gl.getUniformLocation(program, "modelMatrix");
         gl.uniformMatrix4fv(modelMatrixLoc, false, modelMatrix);
         render();
     }
-    setInterval(rotate, 50);
+    setInterval(rotate, 150);
 };
 
 
