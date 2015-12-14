@@ -213,19 +213,28 @@ window.onload = function init()
         gl.uniformMatrix4fv(modelMatrixLoc, false, modelMatrix);
     }
 
-    function zoomin()
+    function goforward()
     {
-        modelMatrix[0] += 0.1;
-        modelMatrix[5] += 0.1;
-        modelMatrix[10] += 0.1;
-        var lol = new Float32Array(modelMatrix);
-        gl.uniformMatrix4fv(modelMatrixLoc, false, lol);
+        var temp = vec3.create();
+        vec3.scale(temp, look_dir, 0.1);
+        vec3.add(camera_pos, camera_pos, temp);
+
+        vec3.add(eye, camera_pos, look_dir);
+        mat4.lookAt(viewMatrix, camera_pos, eye, up);
+
+        gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
     }
 
-    function zoomout()
+    function gobackwards()
     {
-        mat4.scale(modelMatrix, modelMatrix, zoomoutvec);
-        gl.uniformMatrix4fv(modelMatrixLoc, false, modelMatrix);
+        var temp = vec3.create();
+        vec3.scale(temp, look_dir, -0.1);
+        vec3.add(camera_pos, camera_pos, temp);
+
+        vec3.add(eye, camera_pos, look_dir);
+        mat4.lookAt(viewMatrix, camera_pos, eye, up);
+
+        gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
     }
 
     function goright()
@@ -234,10 +243,7 @@ window.onload = function init()
         vec3.scale(temp, camera_right(), -0.1);
         vec3.add(camera_pos, camera_pos, temp);
 
-        console.log(camera_pos);
-
         vec3.add(eye, camera_pos, look_dir);
-        console.log(eye);
         mat4.lookAt(viewMatrix, camera_pos, eye, up);
         gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
     }
@@ -248,10 +254,7 @@ window.onload = function init()
         vec3.scale(temp, camera_right(), 0.1);
         vec3.add(camera_pos, camera_pos, temp);
 
-        console.log(camera_pos);
-
         vec3.add(eye, camera_pos, look_dir);
-        console.log(eye);
         mat4.lookAt(viewMatrix, camera_pos, eye, up);
         gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
     }
@@ -261,7 +264,6 @@ window.onload = function init()
         var temp = vec3.create();
         vec3.cross(temp, up, look_dir);
         vec3.normalize(temp, temp);
-        //temp[0] *= -1;
         return temp;
     }
 
@@ -269,10 +271,10 @@ window.onload = function init()
         switch(event.keyCode)
         {
             case 87: // 'w'
-                zoomin();
+                goforward();
                 break;
             case 83: // 's'
-                zoomout();
+                gobackwards();
                 break;
             case 65: // 'a'
                 goleft();
@@ -283,11 +285,25 @@ window.onload = function init()
         }
     });
 
-    canvas.addEventListener("mousemove", function(event) {
-        look_dir[0] = normValue(event.clientX, 0, 512, -1.0, 1.0);
+    var transMat = mat4.create();
+    var last_pos;
+    var init = true;
+    window.addEventListener("mousemove", function(event) {
+        if (init)
+        {
+            last_pos = event.clientX;
+            init = false;
+            return;
+        }
+
+        mat4.rotateY(transMat, transMat, (event.clientX - last_pos) * 0.00001);
+        vec3.transformMat4(look_dir, look_dir, transMat);
+
         vec3.add(eye, camera_pos, look_dir);
-        mat4.lookAt(viewMatrix, eye, look_dir, up);
+        mat4.lookAt(viewMatrix, camera_pos, eye, up);
         gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
+        last_pos = event.clientX;
+        console.log(look_dir);
     });
     //setInterval(rotate, 50);
     render();
