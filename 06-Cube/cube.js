@@ -174,17 +174,14 @@ window.onload = function init()
                                     0.0, 1.0, 0.0, 0.0,
                                     0.0, 0.0, 1.0, 0.0,
                                     0.0, 0.0, 0.0, 1.0];
-    var rofl = new Float32Array(modelMatrix);
-    gl.uniformMatrix4fv(modelMatrixLoc, false, rofl);
+    gl.uniformMatrix4fv(modelMatrixLoc, false, modelMatrix);
 
     // Set and load viewMatrix
     viewMatrix = mat4.create();
-    viewMatrix = new Float32Array(viewMatrix);
     gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
 
     // Set and load projectionMatrix
     projectionMatrix = mat4.create();
-    projectionMatrix = new Float32Array(projectionMatrix);
     mat4.perspective(projectionMatrix, 0.78, canvas.width/canvas.height, 0.00001, 256.0);
     gl.uniformMatrix4fv(projectionMatrixLoc, false, projectionMatrix);
 
@@ -200,7 +197,10 @@ window.onload = function init()
     vec3.set(up, 0.0, 1.0, 0.0);
     vec3.set(look_dir, 0.0, 0.0, 1.0);
 
-    mat4.lookAt(viewMatrix, eye_pos, look_dir, up);
+    var eye = vec3.create();
+    vec3.add(eye, eye_pos, look_dir);
+
+    mat4.lookAt(viewMatrix, eye, look_dir, up);
     gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
 
     var zoominvec = vec3.create();
@@ -237,7 +237,8 @@ window.onload = function init()
         //mat4.translate(modelMatrix, modelMatrix, transvec);
         //gl.uniformMatrix4fv(modelMatrixLoc, false, modelMatrix);
         eye_pos[0] += 0.1;
-        mat4.lookAt(viewMatrix, eye_pos, look_dir, up);
+        vec3.add(eye, eye_pos, look_dir);
+        mat4.lookAt(viewMatrix, eye, look_dir, up);
         gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
     }
     
@@ -247,7 +248,8 @@ window.onload = function init()
         //mat4.translate(modelMatrix, modelMatrix, transvec);
         //gl.uniformMatrix4fv(modelMatrixLoc, false, modelMatrix);
         eye_pos[0] -= 0.1;
-        mat4.lookAt(viewMatrix, eye_pos, look_dir, up);
+        vec3.add(eye, eye_pos, look_dir);
+        mat4.lookAt(viewMatrix, eye, look_dir, up);
         gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
     }
 
@@ -270,9 +272,9 @@ window.onload = function init()
     });
 
     canvas.addEventListener("mousemove", function(event) {
-        var point = vec3.create();
-        vec3.set(point, 2.5, 0.0, 0.5);
-        mat4.lookAt(viewMatrix, eye, point, up);
+        look_dir[0] = normValue(event.clientX, 0, 512, -1.0, 1.0);
+        vec3.add(eye, eye_pos, look_dir);
+        mat4.lookAt(viewMatrix, eye, look_dir, up);
         gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
     });
     //setInterval(rotate, 50);
