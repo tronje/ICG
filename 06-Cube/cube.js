@@ -10,6 +10,12 @@ var positionBuffer;
 var modelMatrixLoc;
 var modelMatrix;
 
+var viewMatrixLoc;
+var viewMatrix;
+
+var projectionMatrixLoc;
+var projectionMatrix;
+
 window.onload = function init()
 {
     // Get canvas and setup webGL
@@ -157,20 +163,102 @@ window.onload = function init()
     var vPosition = gl.getAttribLocation(program, "vPosition");
     gl.vertexAttribPointer(vPosition, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vPosition);
+
+    // get locations of matrices
+    modelMatrixLoc = gl.getUniformLocation(program, "modelMatrix");
+    viewMatrixLoc = gl.getUniformLocation(program, "viewMatrix");
+    projectionMatrixLoc = gl.getUniformLocation(program, "projectionMatrix");
     
     // Set and load modelMatrix
-    modelMatrix = mat4.create();
-    modelMatrix = new Float32Array(modelMatrix);
+    modelMatrix = [1.0, 0.0, 0.0, 0.0,
+                                    0.0, 1.0, 0.0, 0.0,
+                                    0.0, 0.0, 1.0, 0.0,
+                                    0.0, 0.0, 0.0, 1.0];
+    var rofl = new Float32Array(modelMatrix);
+    gl.uniformMatrix4fv(modelMatrixLoc, false, rofl);
+
+    // Set and load viewMatrix
+    viewMatrix = mat4.create();
+    viewMatrix = new Float32Array(viewMatrix);
+    gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
+
+    // Set and load projectionMatrix
+    projectionMatrix = mat4.create();
+    projectionMatrix = new Float32Array(projectionMatrix);
+    gl.uniformMatrix4fv(projectionMatrixLoc, false, projectionMatrix);
+
+    // set some manipulation vectors
+    // rotation vector
     var rotvec = vec3.create();
-    vec3.set(rotvec, 0, 1, 1);
-    modelMatrixLoc = gl.getUniformLocation(program, "modelMatrix");
+    vec3.set(rotvec, 1, 1, 1);
+
+    var eye = vec3.create();
+    var up = vec3.create();
+    var look = vec3.create();
+    vec3.set(eye, 0.0, 0.0, 0.0);
+    vec3.set(up, 0.0, 1.0, 0.0);
+    vec3.set(look, 0.0, 0.0, -1.0);
+
+    mat4.lookAt(viewMatrix, eye, look, up);
+    gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
+
+    var zoominvec = vec3.create();
+    vec3.set(zoominvec, 1.5, 1.5, 1.5);
+    var zoomoutvec = vec3.create();
+    vec3.set(zoomoutvec, 0.9, 0.9, 0.9);
+
+    var transvec = vec3.create();
 
     function rotate()
     {
         mat4.rotate(modelMatrix, modelMatrix, 0.01, rotvec);
         gl.uniformMatrix4fv(modelMatrixLoc, false, modelMatrix);
     }
-    setInterval(rotate, 50);
+
+    function zoomin()
+    {
+        modelMatrix[0] += 0.1;
+        modelMatrix[5] += 0.1;
+        modelMatrix[10] += 0.1;
+        console.log(modelMatrix);
+        //var lol = new Float32Array(modelMatrix);
+        //gl.uniformMatrix4fv(modelMatrixLoc, false, lol);
+    }
+
+    function zoomout()
+    {
+        mat4.scale(modelMatrix, modelMatrix, zoomoutvec);
+        gl.uniformMatrix4fv(modelMatrixLoc, false, modelMatrix);
+    }
+
+    function goright()
+    {
+        vec3.set(transvec, 0.1, 0, 0);
+        mat4.translate(modelMatrix, modelMatrix, transvec);
+        gl.uniformMatrix4fv(modelMatrixLoc, false, modelMatrix);
+    }
+    
+    function goleft()
+    {
+        vec3.set(transvec, -0.2, 0, 0);
+        mat4.translate(modelMatrix, modelMatrix, transvec);
+        gl.uniformMatrix4fv(modelMatrixLoc, false, modelMatrix);
+    }
+
+    window.addEventListener("keydown", function(event) {
+        switch(event.keyCode)
+        {
+            case 87: // 'w'
+                zoomin();
+            case 83: // 's'
+                zoomout();
+            case 65: // 'a'
+                goleft();
+            case 68: // 'd'
+                goright();
+        }
+    });
+    //setInterval(rotate, 50);
     render();
 };
 
@@ -181,5 +269,3 @@ function render()
     gl.drawArrays(gl.TRIANGLES, 0, vertices.length/3);
     requestAnimFrame(render);
 }
-
-

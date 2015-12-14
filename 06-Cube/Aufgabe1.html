@@ -4,17 +4,22 @@
         <meta charset="utf-8"/>
         <title>Zettel 6 - Aufgabe 1</title>
         
+        <link rel="stylesheet" type="text/css" href="main.css">
+
         <script id="vertex-shader" type="x-shader/x-vertex">
             attribute vec4 vPosition;
             attribute vec4 vColor;
             
             uniform mat4 modelMatrix;
+            uniform mat4 viewMatrix;
+            uniform mat4 projectionMatrix;
 
             varying vec4 fColor;
             void main()
             {
                 fColor = vColor;
-                gl_Position = modelMatrix * vPosition;
+                //gl_Position = modelMatrix * vPosition * viewMatrix * projectionMatrix;
+                gl_Position = vPosition * projectionMatrix * viewMatrix * modelMatrix;
             }
         </script>
         <script id="fragment-shader" type="x-shader/x-fragment">
