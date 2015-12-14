@@ -285,26 +285,39 @@ window.onload = function init()
         }
     });
 
-    var transMat = mat4.create();
-    var last_pos;
-    var init = true;
-    window.addEventListener("mousemove", function(event) {
-        if (init)
-        {
-            last_pos = event.clientX;
-            init = false;
-            return;
-        }
+    var last_pos = 256;
 
-        mat4.rotateY(transMat, transMat, (event.clientX - last_pos) * 0.00001);
-        vec3.transformMat4(look_dir, look_dir, transMat);
+    canvas.onclick = function() {
+        canvas.requestPointerLock();
+    }
+    document.addEventListener('pointerlockchange', lockChangeAlert, false);
+    document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
+    document.addEventListener('webkitpointerlockchange', lockChangeAlert, false);
+
+    function lockChangeAlert()
+    {
+        if (document.pointerLockElement === canvas ||
+            document.mozPointerLockElement === canvas ||
+            document.webkitPointerLockElement === canvas)
+           {
+               document.addEventListener("mousemove", look_around, false);
+           } else {
+               document.removeEventListener("mousemove", look_around, false);
+           }
+    }
+
+    function look_around(e)
+    {
+        var posX = e.movementX;
+        var offset = 0.0005 * (posX - last_pos);
+        vec3.rotateY(look_dir, look_dir, camera_pos, offset);
 
         vec3.add(eye, camera_pos, look_dir);
         mat4.lookAt(viewMatrix, camera_pos, eye, up);
         gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
-        last_pos = event.clientX;
+        last_pos = posX;
         console.log(look_dir);
-    });
+    }
     //setInterval(rotate, 50);
     render();
 };
