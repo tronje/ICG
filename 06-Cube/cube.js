@@ -309,7 +309,7 @@ window.onload = function init()
     function look_around(e)
     {
         var posX = e.movementX;
-        var offset = 0.0005 * (posX - last_pos);
+        var offset = -0.0001 * (posX - last_pos);
         vec3.rotateY(look_dir, look_dir, camera_pos, offset);
 
         vec3.add(eye, camera_pos, look_dir);
@@ -318,7 +318,7 @@ window.onload = function init()
         last_pos = posX;
         console.log(look_dir);
     }
-    //setInterval(rotate, 50);
+    setInterval(rotate, 50);
     render();
 };
 
