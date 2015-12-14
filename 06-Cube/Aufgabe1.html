@@ -19,7 +19,7 @@
             {
                 fColor = vColor;
                 //gl_Position = modelMatrix * vPosition * viewMatrix * projectionMatrix;
-                gl_Position = vPosition * projectionMatrix * viewMatrix * modelMatrix;
+                gl_Position = projectionMatrix * viewMatrix * modelMatrix * vPosition ;
             }
         </script>
         <script id="fragment-shader" type="x-shader/x-fragment">
