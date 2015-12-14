@@ -170,10 +170,7 @@ window.onload = function init()
     projectionMatrixLoc = gl.getUniformLocation(program, "projectionMatrix");
     
     // Set and load modelMatrix
-    modelMatrix = [1.0, 0.0, 0.0, 0.0,
-                                    0.0, 1.0, 0.0, 0.0,
-                                    0.0, 0.0, 1.0, 0.0,
-                                    0.0, 0.0, 0.0, 1.0];
+    modelMatrix = mat4.create();
     gl.uniformMatrix4fv(modelMatrixLoc, false, modelMatrix);
 
     // Set and load viewMatrix
@@ -190,15 +187,15 @@ window.onload = function init()
     var rotvec = vec3.create();
     vec3.set(rotvec, 1, 1, 1);
 
-    var eye_pos = vec3.create();
+    var camera_pos = vec3.create();
     var up = vec3.create();
     var look_dir = vec3.create();
-    vec3.set(eye_pos, 0.0, 0.0, -3.0);
+    vec3.set(camera_pos, 0.0, 0.0, -3.0);
     vec3.set(up, 0.0, 1.0, 0.0);
     vec3.set(look_dir, 0.0, 0.0, 1.0);
 
     var eye = vec3.create();
-    vec3.add(eye, eye_pos, look_dir);
+    vec3.add(eye, camera_pos, look_dir);
 
     mat4.lookAt(viewMatrix, eye, look_dir, up);
     gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
@@ -233,24 +230,39 @@ window.onload = function init()
 
     function goright()
     {
-        //vec3.set(transvec, 0.1, 0, 0);
-        //mat4.translate(modelMatrix, modelMatrix, transvec);
-        //gl.uniformMatrix4fv(modelMatrixLoc, false, modelMatrix);
-        eye_pos[0] += 0.1;
-        vec3.add(eye, eye_pos, look_dir);
-        mat4.lookAt(viewMatrix, eye, look_dir, up);
+        var temp = vec3.create();
+        vec3.scale(temp, camera_right(), -0.1);
+        vec3.add(camera_pos, camera_pos, temp);
+
+        console.log(camera_pos);
+
+        vec3.add(eye, camera_pos, look_dir);
+        console.log(eye);
+        mat4.lookAt(viewMatrix, camera_pos, eye, up);
         gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
     }
     
     function goleft()
     {
-        //vec3.set(transvec, -0.2, 0, 0);
-        //mat4.translate(modelMatrix, modelMatrix, transvec);
-        //gl.uniformMatrix4fv(modelMatrixLoc, false, modelMatrix);
-        eye_pos[0] -= 0.1;
-        vec3.add(eye, eye_pos, look_dir);
-        mat4.lookAt(viewMatrix, eye, look_dir, up);
+        var temp = vec3.create();
+        vec3.scale(temp, camera_right(), 0.1);
+        vec3.add(camera_pos, camera_pos, temp);
+
+        console.log(camera_pos);
+
+        vec3.add(eye, camera_pos, look_dir);
+        console.log(eye);
+        mat4.lookAt(viewMatrix, camera_pos, eye, up);
         gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
+    }
+
+    function camera_right()
+    {
+        var temp = vec3.create();
+        vec3.cross(temp, up, look_dir);
+        vec3.normalize(temp, temp);
+        //temp[0] *= -1;
+        return temp;
     }
 
     window.addEventListener("keydown", function(event) {
@@ -273,7 +285,7 @@ window.onload = function init()
 
     canvas.addEventListener("mousemove", function(event) {
         look_dir[0] = normValue(event.clientX, 0, 512, -1.0, 1.0);
-        vec3.add(eye, eye_pos, look_dir);
+        vec3.add(eye, camera_pos, look_dir);
         mat4.lookAt(viewMatrix, eye, look_dir, up);
         gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
     });
