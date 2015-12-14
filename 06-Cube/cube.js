@@ -306,11 +306,12 @@ window.onload = function init()
            }
     }
 
+    var null_vec = vec3.create();
     function look_around(e)
     {
         var posX = e.movementX;
-        var offset = -0.0001 * (posX - last_pos);
-        vec3.rotateY(look_dir, look_dir, camera_pos, offset);
+        var offset = -0.005 * posX;
+        vec3.rotateY(look_dir, look_dir, null_vec, offset);
 
         vec3.add(eye, camera_pos, look_dir);
         mat4.lookAt(viewMatrix, camera_pos, eye, up);
