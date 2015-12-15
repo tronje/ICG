@@ -187,46 +187,54 @@ window.onload = function init()
     var rotvec = vec3.create();
     vec3.set(rotvec, 1, 1, 1);
 
+    // position of our camera
     var camera_pos = vec3.create();
-    var up = vec3.create();
-    var look_dir = vec3.create();
     vec3.set(camera_pos, 0.0, 0.0, -3.0);
+
+    // which direction is up? Y-Axis!
+    var up = vec3.create();
     vec3.set(up, 0.0, 1.0, 0.0);
+
+    // the direction vector of the direction in which we are looking
+    var look_dir = vec3.create();
     vec3.set(look_dir, 0.0, 0.0, 1.0);
 
+    // 'eye' is the sum of the camera position and the look-direction
     var eye = vec3.create();
     vec3.add(eye, camera_pos, look_dir);
 
-    mat4.lookAt(viewMatrix, eye, look_dir, up);
+    // look at the sum of camera and look direction
+    mat4.lookAt(viewMatrix, camera_pos, eye, up);
     gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
 
-    var zoominvec = vec3.create();
-    vec3.set(zoominvec, 1.5, 1.5, 1.5);
-    var zoomoutvec = vec3.create();
-    vec3.set(zoomoutvec, 0.9, 0.9, 0.9);
-
-    var transvec = vec3.create();
-
+    // function that rotates the cube
     function rotate()
     {
         mat4.rotate(modelMatrix, modelMatrix, 0.01, rotvec);
         gl.uniformMatrix4fv(modelMatrixLoc, false, modelMatrix);
     }
 
+    // function called upon 'W' key-press
     function goforward()
     {
         var temp = vec3.create();
+        // scale the look direction by 0.1 and add it to the camera position,
+        // thus moving the camera position forward
         vec3.scale(temp, look_dir, 0.1);
         vec3.add(camera_pos, camera_pos, temp);
 
+        // update 'eye' variable
         vec3.add(eye, camera_pos, look_dir);
+        // update what we're looking at
         mat4.lookAt(viewMatrix, camera_pos, eye, up);
 
         gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
     }
 
+    // function called upon 'A' key-press
     function gobackwards()
     {
+        // same as goforward(), but with a negative scalar
         var temp = vec3.create();
         vec3.scale(temp, look_dir, -0.1);
         vec3.add(camera_pos, camera_pos, temp);
@@ -237,8 +245,13 @@ window.onload = function init()
         gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
     }
 
+    // function called upon 'D' key-press
     function goright()
     {
+        // just like in goforward and gobackwards, we scale a vector
+        // and add it to the camera's position
+        // but this time, the vector we use is a direction vector orthogonal
+        // to our look direction, computed in camera_right()
         var temp = vec3.create();
         vec3.scale(temp, camera_right(), -0.1);
         vec3.add(camera_pos, camera_pos, temp);
@@ -248,8 +261,10 @@ window.onload = function init()
         gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
     }
     
+    // function called upon 'S' key-press
     function goleft()
     {
+        // same as goright(), but inverted sign on the scalar
         var temp = vec3.create();
         vec3.scale(temp, camera_right(), 0.1);
         vec3.add(camera_pos, camera_pos, temp);
@@ -259,14 +274,18 @@ window.onload = function init()
         gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
     }
 
+    // compute a vector that points exactly right of the camera
+    // i.e. is orthogonal to our look_dir vector
     function camera_right()
     {
         var temp = vec3.create();
+        // we use the cross-product for that
         vec3.cross(temp, up, look_dir);
         vec3.normalize(temp, temp);
         return temp;
     }
 
+    // key-press event listener
     window.addEventListener("keydown", function(event) {
         switch(event.keyCode)
         {
@@ -285,15 +304,21 @@ window.onload = function init()
         }
     });
 
+    // initialize our last position to something;
+    // not too important what, will be updated anyway
     var last_pos = 256;
 
+    // when the canvas is clicked, lock the mouse cursor in
     canvas.onclick = function() {
         canvas.requestPointerLock();
     }
+
+    // add event listeners to see if the cursor lock state changes
     document.addEventListener('pointerlockchange', lockChangeAlert, false);
     document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
     document.addEventListener('webkitpointerlockchange', lockChangeAlert, false);
 
+    // handle changing states of cursor locking
     function lockChangeAlert()
     {
         if (document.pointerLockElement === canvas ||
@@ -306,18 +331,27 @@ window.onload = function init()
            }
     }
 
+    // just a null vector, i.e. [0, 0, 0]
     var null_vec = vec3.create();
+
+    // our function that handles mouse-controlled camera-movement
     function look_around(e)
     {
+        // get relative mouse position (x-coordinate only for the time being)
         var posX = e.movementX;
+
+        // compute and offset to move the camera by
+        // the -0.005 is just a number that makes for good speed
         var offset = -0.005 * posX;
+
+        // rotate our look direction around the Y-axis
         vec3.rotateY(look_dir, look_dir, null_vec, offset);
 
+        // update everything
         vec3.add(eye, camera_pos, look_dir);
         mat4.lookAt(viewMatrix, camera_pos, eye, up);
         gl.uniformMatrix4fv(viewMatrixLoc, false, viewMatrix);
         last_pos = posX;
-        console.log(look_dir);
     }
     setInterval(rotate, 50);
     render();
@@ -329,10 +363,4 @@ function render()
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLES, 0, vertices.length/3);
     requestAnimFrame(render);
-}
-
-function normValue(value, valueMin, valueMax, resultMin, resultMax)
-{
-    temp = (value - valueMin) / (valueMax - valueMin);
-    return temp * (resultMax - resultMin) + resultMin;
 }
