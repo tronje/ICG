@@ -179,7 +179,7 @@ window.onload = function init()
 
     // Set and load projectionMatrix
     projectionMatrix = mat4.create();
-    mat4.perspective(projectionMatrix, 0.78, canvas.width/canvas.height, 0.00001, 256.0);
+    mat4.perspective(projectionMatrix, 0.78, canvas.width/canvas.height, 0.01, 256.0);
     gl.uniformMatrix4fv(projectionMatrixLoc, false, projectionMatrix);
 
     // set some manipulation vectors
